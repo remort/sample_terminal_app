@@ -26,9 +26,9 @@ class Pad:
         curses.init_pair(cpn, fg, bg)
 
         if not n:
-            self._pad.addstr(y, x, string, curses.color_pair(cpn))
+            self._pad.addstr(y, x, string, curses.color_pair(cpn) | attr)
         else:
-            self._pad.addnstr(y, x, string, n, curses.color_pair(cpn))
+            self._pad.addnstr(y, x, string, n, curses.color_pair(cpn) | attr)
 
     def getch(self, *args, **kwargs):
         return self._pad.getch(*args, **kwargs)

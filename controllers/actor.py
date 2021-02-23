@@ -83,7 +83,7 @@ class ActorControler:
 
     def draw_actor(self):
         self.update_actor_location()
-        self._pad.addch(0, 0, '*', curses.color_pair(3))
+        self._pad.addch(0, 0, '*', curses.color_pair(4))
         self.refresh()
 
     def get_actor_on_screen_coords(self):

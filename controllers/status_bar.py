@@ -35,13 +35,16 @@ class StatusBarController:
             last_message = self.st.messages.pop()
             messages -= 1
 
-        status_line = f'{map_size}|{screen_size}|{screen_most_point}|{actor_location}|{bump}'
+        location_string = f'{actor_location} '
+        status_line = f'{map_size}|{screen_size}|{screen_most_point}|{bump}'
         message_line = f'{last_message}|{messages}'
         message_line_start = self.st.scene_coords.br.x - len(message_line)
 
-        self._pad.print(status_line, fg=curses.COLOR_RED, bg=curses.COLOR_YELLOW, attr=curses.A_ALTCHARSET, cpn=1)
-        self._pad.print(message_line, 0, message_line_start, n=5, fg=curses.COLOR_BLACK, bg=curses.COLOR_YELLOW,
-                        attr=curses.A_BOLD, cpn=2)
+        self._pad.print(location_string, fg=curses.COLOR_BLACK, bg=curses.COLOR_YELLOW, attr=curses.A_BOLD, cpn=1)
+        self._pad.print(status_line, 0, len(location_string), fg=curses.COLOR_RED, bg=curses.COLOR_YELLOW,
+                        attr=curses.A_DIM, cpn=2)
+        self._pad.print(message_line, 0, message_line_start, n=5, fg=curses.COLOR_BLUE, bg=curses.COLOR_YELLOW,
+                        attr=curses.A_BOLD, cpn=3)
 
     def process_event(self, key):
         pass
