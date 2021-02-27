@@ -12,6 +12,7 @@ class AnimationRunner:
     def run(self):
         while True:
             key = self._kb_pad.getch()
+            curses.flushinp()
 
             if key == curses.KEY_END:
                 break

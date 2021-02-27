@@ -1,5 +1,7 @@
 import curses
 
+from colors import COLOR_DEFAULT
+
 
 class Pad:
     def __init__(self, height, width):
@@ -17,14 +19,10 @@ class Pad:
             string,
             y=0,
             x=0,
-            fg=curses.COLOR_BLACK,
-            bg=curses.COLOR_BLACK,
             attr=curses.A_NORMAL,
             n=None,
-            cpn=1,
+            cpn=COLOR_DEFAULT,
     ):
-        curses.init_pair(cpn, fg, bg)
-
         if not n:
             self._pad.addstr(y, x, string, curses.color_pair(cpn) | attr)
         else:

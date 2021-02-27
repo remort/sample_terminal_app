@@ -1,5 +1,6 @@
 import curses
 
+from colors import COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
 from storage import RuntimeStorage
 
 
@@ -9,8 +10,7 @@ class StatusBarController:
         self.st = storage
         self.do_animation()
 
-        curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_YELLOW)
-        self._pad.pad.bkgd(' ', curses.color_pair(8))
+        self._pad.pad.bkgd(' ', curses.color_pair(COLOR_STATUS_BAR_STATS))
 
     def print_status(self):
         screen_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
@@ -40,11 +40,9 @@ class StatusBarController:
         message_line = f'{last_message}|{messages}'
         message_line_start = self.st.scene_coords.br.x - len(message_line)
 
-        self._pad.print(location_string, fg=curses.COLOR_BLACK, bg=curses.COLOR_YELLOW, attr=curses.A_BOLD, cpn=1)
-        self._pad.print(status_line, 0, len(location_string), fg=curses.COLOR_RED, bg=curses.COLOR_YELLOW,
-                        attr=curses.A_DIM, cpn=2)
-        self._pad.print(message_line, 0, message_line_start, n=5, fg=curses.COLOR_BLUE, bg=curses.COLOR_YELLOW,
-                        attr=curses.A_BOLD, cpn=3)
+        self._pad.print(location_string, attr=curses.A_BOLD, cpn=COLOR_STATUS_BAR_STATS)
+        self._pad.print(status_line, 0, len(location_string), attr=curses.A_DIM, cpn=COLOR_STATUS_BAR_STATS)
+        self._pad.print(message_line, 0, message_line_start, n=5, attr=curses.A_BOLD, cpn=COLOR_STATUS_BAR_MESSAGES)
 
     def process_event(self, key):
         pass
