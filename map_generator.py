@@ -4,13 +4,14 @@ import random
 import typing as t
 from pprint import pprint
 
-from dto import Coordinates, Point
+Point = t.Tuple[int, int]
+Coordinates = t.Tuple[Point, Point, Point, Point]
 
 
 class MapGen:
     def __init__(self, scale):
         if scale < 2 or scale > 10:
-            raise ValueError('Size should lays in 2..9.')
+            raise ValueError('Size should lays in 2..10.')
 
         self.heights_spectre = 8
         # 2 ** 3 == 8
@@ -22,31 +23,24 @@ class MapGen:
         self.map: t.List[t.List[int]] = self.init_map()
         self.coords: Coordinates = self.get_map_corners_coords()
 
-        #self.gen()
-
     @staticmethod
     def get_map_size(scale: int) -> int:
         return 2 ** scale + 1
 
-    def get_random_factor(self):
-        return 0
-        # bits: 1 or 2
-        #return random.getrandbits(1)
+    @staticmethod
+    def round(x):
+        """2.5 -> 3, 2.4 -> 2, unlike modern round()."""
+        return int(x + 0.5)
 
-        # factor_bits = self.steps_to_finish // self.roughness_factor
-        # if factor_bits > 0:
-        #     try:
-        #         return random.getrandbits(factor_bits)
-        #     except ValueError:
-        #         print(factor_bits)
-        #         return 0
-        # return 0
-        #
-        # #return random.randint(0, round(self.steps_to_finish / self.roughness_factor))
+    def get_random_factor(self) -> int:
+        value = random.getrandbits(1)
+        if not value:
+            return 0
+        return value if random.getrandbits(1) else -value
 
     def get_rand_height(self) -> int:
+        # works much faster than random.randint()
         return random.getrandbits(3)
-        #return random.randint(1, self.heights_spectre)
 
     def init_map(self) -> t.List[t.List[int]]:
         matrix = list()
@@ -56,7 +50,7 @@ class MapGen:
                 if x in (0, self.size - 1) and y in (0, self.size - 1):
                     row.append(self.get_rand_height() + self.get_random_factor())
                 else:
-                    row.append(0)
+                    row.append(-1)
             matrix.append(row)
 
         return matrix
@@ -70,70 +64,97 @@ class MapGen:
             (end, end),
         )
 
-    def get_coords_mid_point_pos(self, coords):
-        mid_point = (
+    def get_coords_mid_point_pos(self, coords: Coordinates) -> Point:
+        return (
             self.get_middle(coords[2][0], coords[1][0]),
             self.get_middle(coords[1][1], coords[0][1]),
         )
-        return mid_point
 
-    def calc_avg_for_coords(self, coords):
-        tlp = coords[0]
-        trp = coords[1]
-        brp = coords[2]
-        blp = coords[3]
-
+    def calc_avg_for_coords(self, coords: Coordinates) -> int:
         avg = sum((
-            self.map[tlp[0]][tlp[1]],
-            self.map[trp[0]][trp[1]],
-            self.map[brp[0]][brp[1]],
-            self.map[blp[0]][blp[1]],
+            self.map[coords[0][0]][coords[0][1]],
+            self.map[coords[1][0]][coords[1][1]],
+            self.map[coords[2][0]][coords[2][1]],
+            self.map[coords[3][0]][coords[3][1]],
         )) / 4
 
-        return round(avg + self.get_random_factor())
+        return self.round(avg + self.get_random_factor())
 
-    def calc_three_points_avg(self, point_1, point_2, point_3) -> int:
-        avg = round(sum((
+    def calc_four_points_avg(self, point_1: Point, point_2: Point, point_3: Point, point_4: Point) -> int:
+        avg = sum((
             self.map[point_1[0]][point_1[1]],
             self.map[point_2[0]][point_2[1]],
             self.map[point_3[0]][point_3[1]],
-        )) / 3)
+            self.map[point_4[0]][point_3[1]] if point_4 else 0,
+        )) / 4 if point_4 else 3
 
-        return round(avg + self.get_random_factor())
+        return self.round(avg + self.get_random_factor())
 
     @staticmethod
-    def get_edge_size_by_coords(coords) -> int:
+    def get_edge_size_by_coords(coords: Coordinates) -> int:
         """Assume that matrix is always a square (same edges length)."""
         return coords[1][1] - coords[0][1] + 1
 
-    def set_center_point_for_coords(self, coords: t.Tuple[int, int]) -> t.Tuple[int, int]:
+    def set_center_point_for_coords(self, coords: Coordinates) -> None:
         avg_val = self.calc_avg_for_coords(coords)
         center_point = self.get_coords_mid_point_pos(coords)
         self.map[center_point[0]][center_point[1]] = avg_val
-        return center_point
 
-    def set_edge_midpoints_for_coords(self, coords, center_point) -> None:
+    def set_edge_midpoints_for_coords(self, coords: Coordinates, edge_size: int) -> None:
+        center_point = self.get_coords_mid_point_pos(coords)
+
+        upper_mid_point = None
+        upper_mid_point_x = center_point[0] - edge_size
+        if upper_mid_point_x > 0:
+            upper_mid_point = (upper_mid_point_x, center_point[1])
+
+        lower_mid_point = None
+        lower_mid_point_x = center_point[0] + edge_size
+        if lower_mid_point_x < self.size:
+            lower_mid_point = (lower_mid_point_x, center_point[1])
+
+        rightmost_mid_point = None
+        righmost_mid_point_y = center_point[1] + edge_size
+        if righmost_mid_point_y < self.size:
+            rightmost_mid_point = (center_point[0], righmost_mid_point_y)
+
+        leftmost_mid_point = None
+        leftmost_mid_point_y = center_point[1] - edge_size
+        if leftmost_mid_point_y > self.size:
+            leftmost_mid_point = (center_point[0], leftmost_mid_point_y)
+
         # top edge center point
-        self.map[coords[0][0]][center_point[1]] = self.calc_three_points_avg(coords[0], coords[1], center_point)
+        if self.map[coords[0][0]][center_point[1]] == -1:
+            self.map[coords[0][0]][center_point[1]] = self.calc_four_points_avg(
+                coords[0], coords[1], center_point, upper_mid_point
+            )
 
         # bottom edge center point
-        self.map[coords[3][0]][center_point[1]] = self.calc_three_points_avg(coords[3], coords[2], center_point)
+        if self.map[coords[3][0]][center_point[1]] == -1:
+            self.map[coords[3][0]][center_point[1]] = self.calc_four_points_avg(
+                coords[3], coords[2], center_point, lower_mid_point
+            )
 
         # right edge center point
-        self.map[center_point[0]][coords[2][1]] = self.calc_three_points_avg(coords[1], coords[2], center_point)
+        if self.map[center_point[0]][coords[2][1]] == -1:
+            self.map[center_point[0]][coords[2][1]] = self.calc_four_points_avg(
+                coords[1], coords[2], center_point, rightmost_mid_point
+            )
 
         # left edge center point
-        self.map[center_point[0]][coords[3][1]] = self.calc_three_points_avg(coords[0], coords[3], center_point)
+        if self.map[center_point[0]][coords[3][1]] == -1:
+            self.map[center_point[0]][coords[3][1]] = self.calc_four_points_avg(
+                coords[0], coords[3], center_point, leftmost_mid_point
+            )
 
     def get_middle(self, int_one: int, int_two: int) -> int:
         return (int_one + int_two) // 2
 
-    def get_subsquares_coords(self, coords: t.Tuple[t.Tuple[int, int]]) -> t.Tuple[t.Tuple[t.Tuple[int, int], ...], ...]:
-        # coords = ((x, y), (x, y), (x, y), (x, y))
-        # tlp = coords[0]
-        # trp = coords[1]
-        # brp = coords[2]
-        # blp = coords[3]
+    def get_subsquares_coords(self, coords: Coordinates) -> t.Tuple[Coordinates, ...]:
+        # top left point = coords[0]
+        # top right point = coords[1]
+        # bottom right point = coords[2]
+        # bottom left point = coords[3]
 
         center_point = (self.get_middle(coords[2][0], coords[1][0]), self.get_middle(coords[1][1], coords[0][1]))
         rows_diff = self.get_middle(coords[3][0], coords[0][0])
@@ -167,16 +188,22 @@ class MapGen:
         return tl_square_c, tr_square_c, br_square_c, bl_square_c
 
     def run_algo(self, coords_set: t.List[Coordinates]) -> t.List[Coordinates]:
+        edge_size = self.get_edge_size_by_coords(coords_set[0])
         new_coords_set = list()
         for coords in coords_set:
-            center_point = self.set_center_point_for_coords(coords)
-            self.set_edge_midpoints_for_coords(coords, center_point)
+            self.set_center_point_for_coords(coords)
+
+        for coords in coords_set:
+            self.set_edge_midpoints_for_coords(coords, edge_size)
+
             new_coords_set.extend(self.get_subsquares_coords(coords))
 
         return new_coords_set
 
-    def gen(self) -> None:
+    def print(self):
+        pprint(self.map, width=200)
 
+    def gen(self) -> None:
         coords_set = self.run_algo([self.coords])
 
         while True:
@@ -187,10 +214,40 @@ class MapGen:
             coords_set = new_coords_set
             self.steps_to_finish -= 1
 
-        #pprint(self.map)
-        #print(self.steps_to_finish)
+
+class MapGenTest(MapGen):
+    def __init__(self):
+        super(MapGenTest, self).__init__(scale=4)
+        self.expected_map = [[5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5],
+                             [3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3],
+                             [3, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 3],
+                             [3, 3, 3, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3],
+                             [3, 2, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 2, 3],
+                             [3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3],
+                             [3, 2, 3, 2, 3, 3, 4, 3, 4, 3, 4, 3, 3, 2, 3, 2, 3],
+                             [3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3],
+                             [3, 2, 2, 2, 3, 2, 3, 3, 5, 3, 3, 2, 3, 2, 2, 2, 3],
+                             [3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4, 4, 3, 3, 3, 3],
+                             [3, 2, 3, 2, 3, 2, 4, 3, 3, 3, 4, 3, 4, 2, 3, 2, 3],
+                             [3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 4, 3, 3, 3, 3],
+                             [3, 2, 2, 2, 4, 3, 3, 2, 3, 2, 3, 3, 4, 2, 2, 2, 3],
+                             [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+                             [3, 2, 4, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 4, 2, 3],
+                             [3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3],
+                             [5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5]]
+
+    def get_random_factor(self):
+        return 0
+
+    def get_rand_height(self) -> int:
+        return 5
+
+    def test(self):
+        self.gen()
+        assert self.map == self.expected_map
 
 
 if __name__ == "__main__":
-    map_gen = MapGen(10)
+    map_gen = MapGen(6)
     map_gen.gen()
+    map_gen.print()
