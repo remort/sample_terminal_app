@@ -1,24 +1,25 @@
 import curses
 
 from colors import COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
+from controllers.base import BaseController
 from storage import RuntimeStorage
-from tools import Pad
 
 
-class StatusBarController:
+class StatusBarController(BaseController):
     def __init__(self, pad, storage: RuntimeStorage, screen_width: int):
-        self._pad: Pad = pad
-        self.st = storage
-        self.status_bar_width = screen_width
-        self.do_animation()
+        super().__init__(pad, storage)
 
+        self.status_bar_width = screen_width
         self._pad.pad.bkgd(' ', curses.color_pair(COLOR_STATUS_BAR_STATS))
+        self.do_animation()
 
     def print_status(self):
         scene_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
         map_size = f'{self.st.map_size}x{self.st.map_size}'
 
         actor_location = f'{self.st.actor_location.y}x{self.st.actor_location.x} '
+
+        height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
 
         border_bump = ''
         if self.st.screen_is_most_top and self.st.actor_location.y == 0:
@@ -39,7 +40,7 @@ class StatusBarController:
         if not last_message:
             last_message = border_bump
 
-        status_line = f'Map:{map_size} Scene:{scene_size}'
+        status_line = f'Map:{map_size} Scene:{scene_size} H:{height}'
         message_line = f'{last_message}|{messages}'
         if len(message_line) + len(status_line) + len(actor_location) > self.status_bar_width:
             message_line = message_line[:(self.status_bar_width - len(status_line) - len(actor_location))]

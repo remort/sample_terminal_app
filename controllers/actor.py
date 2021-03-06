@@ -1,16 +1,16 @@
 import curses
 
 from colors import COLOR_ACTOR
-from dto import Point
+from controllers.base import BaseController
+from dto import Point, Size
 from storage import RuntimeStorage
 
 
-class ActorControler:
+class ActorControler(BaseController):
     def __init__(self, pad, storage: RuntimeStorage):
-        self._pad = pad
-        self.st = storage
-        self.st.actor_screen_center_offset = Point(x=0, y=0)
+        super().__init__(pad, storage)
 
+        self.st.actor_screen_center_offset = Size(w=0, h=0)
         self.draw_actor()
 
     def get_screen_center(self):
@@ -43,19 +43,19 @@ class ActorControler:
         if self.st.screen_is_most_top:
 
             if step > 0:
-                if self.st.actor_screen_center_offset.y + screen_center.y > 0:
-                    self.st.actor_screen_center_offset.y -= 1
+                if self.st.actor_screen_center_offset.h + screen_center.y > 0:
+                    self.st.actor_screen_center_offset.h -= 1
             else:
-                if self.st.actor_screen_center_offset.y < 0:
-                    self.st.actor_screen_center_offset.y += 1
+                if self.st.actor_screen_center_offset.h < 0:
+                    self.st.actor_screen_center_offset.h += 1
 
         elif self.st.screen_is_most_bottom:
             if step < 0:
-                if self.st.actor_screen_center_offset.y - (self.st.scene_coords.br.y - screen_center.y) < 0:
-                    self.st.actor_screen_center_offset.y += 1
+                if self.st.actor_screen_center_offset.h - (self.st.scene_coords.br.y - screen_center.y) < 0:
+                    self.st.actor_screen_center_offset.h += 1
             else:
-                if self.st.actor_screen_center_offset.y > 0:
-                    self.st.actor_screen_center_offset.y -= 1
+                if self.st.actor_screen_center_offset.h > 0:
+                    self.st.actor_screen_center_offset.h -= 1
 
         self.draw_actor()
 
@@ -67,18 +67,18 @@ class ActorControler:
         screen_center = self.get_screen_center()
         if self.st.screen_is_most_right:
             if step > 0:
-                if self.st.actor_screen_center_offset.x - (self.st.scene_coords.br.x - screen_center.x) < 0:
-                    self.st.actor_screen_center_offset.x += 1
+                if self.st.actor_screen_center_offset.w - (self.st.scene_coords.br.x - screen_center.x) < 0:
+                    self.st.actor_screen_center_offset.w += 1
             else:
-                if self.st.actor_screen_center_offset.x > 0:
-                    self.st.actor_screen_center_offset.x -= 1
+                if self.st.actor_screen_center_offset.w > 0:
+                    self.st.actor_screen_center_offset.w -= 1
         elif self.st.screen_is_most_left:
             if step < 0:
-                if self.st.actor_screen_center_offset.x + screen_center.x > 0:
-                    self.st.actor_screen_center_offset.x -= 1
+                if self.st.actor_screen_center_offset.w + screen_center.x > 0:
+                    self.st.actor_screen_center_offset.w -= 1
             else:
-                if self.st.actor_screen_center_offset.x < 0:
-                    self.st.actor_screen_center_offset.x += 1
+                if self.st.actor_screen_center_offset.w < 0:
+                    self.st.actor_screen_center_offset.w += 1
 
         self.draw_actor()
 
@@ -91,8 +91,8 @@ class ActorControler:
         screen_center = self.get_screen_center()
 
         return Point(
-            y=screen_center.y + self.st.actor_screen_center_offset.y,
-            x=screen_center.x + self.st.actor_screen_center_offset.x,
+            y=screen_center.y + self.st.actor_screen_center_offset.h,
+            x=screen_center.x + self.st.actor_screen_center_offset.w,
         )
 
     def update_actor_location(self):

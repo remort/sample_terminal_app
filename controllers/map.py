@@ -1,42 +1,19 @@
 import curses
 
-from colors import (
-    COLOR_MAP_H1,
-    COLOR_MAP_H2,
-    COLOR_MAP_H3,
-    COLOR_MAP_H4,
-    COLOR_MAP_H5,
-    COLOR_MAP_H6,
-    COLOR_MAP_H7,
-    COLOR_MAP_H8,
-    COLOR_MAP_H9,
-)
+from controllers.base import BaseController
 from dto import Coordinates, Point, Size, Tile
 from storage import RuntimeStorage
 from utils import make_coordinates_by_size
 
 
-class MapController:
+class MapController(BaseController):
     def __init__(self, pad, storage: RuntimeStorage, scene_size: Size):
-        self.st = storage
-
-        self.heights_map = {
-            0: ('0', COLOR_MAP_H1),
-            1: ('1', COLOR_MAP_H2),
-            2: ('2', COLOR_MAP_H3),
-            3: ('3', COLOR_MAP_H4),
-            4: ('4', COLOR_MAP_H5),
-            5: ('5', COLOR_MAP_H6),
-            6: ('6', COLOR_MAP_H7),
-            7: ('7', COLOR_MAP_H8),
-            8: ('8', COLOR_MAP_H9),
-        }
+        super().__init__(pad, storage)
 
         self.st.scene_size = scene_size
         self.st.scene_coords = make_coordinates_by_size(scene_size)
 
         self.st.map = self._generate_map_from_surface()
-        self._pad = pad
 
         self.calculate_initial_screen_position()
         self.draw_surface()
@@ -46,7 +23,15 @@ class MapController:
         for y, row in enumerate(self.st.surface):
             line = list()
             for x, col in enumerate(row):
-                line.append(Tile(x=x, y=y, ch=self.heights_map[col][0], color=self.heights_map[col][1], height=col))
+                line.append(
+                    Tile(
+                        x=x,
+                        y=y,
+                        ch=self.st.heights_to_colors_map[col][0],
+                        color=self.st.heights_to_colors_map[col][1],
+                        height=col,
+                    )
+                )
             _map.append(line)
         return _map
 
@@ -92,7 +77,7 @@ class MapController:
                 self.refresh()
                 return
 
-        if self.st.actor_screen_center_offset.y != 0:
+        if self.st.actor_screen_center_offset.h != 0:
             self.refresh()
             return
 
@@ -119,7 +104,7 @@ class MapController:
                 self.refresh()
                 return
 
-        if self.st.actor_screen_center_offset.x != 0:
+        if self.st.actor_screen_center_offset.w != 0:
             self.refresh()
             return
 
