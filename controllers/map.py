@@ -1,6 +1,7 @@
 import curses
 
 from colors import (
+    COLOR_MAP_H1,
     COLOR_MAP_H2,
     COLOR_MAP_H3,
     COLOR_MAP_H4,
@@ -9,8 +10,6 @@ from colors import (
     COLOR_MAP_H7,
     COLOR_MAP_H8,
     COLOR_MAP_H9,
-    COLOR_MAP_H10,
-    COLOR_MAP_H1,
 )
 from dto import Coordinates, Point, Size, Tile
 from storage import RuntimeStorage
@@ -22,16 +21,15 @@ class MapController:
         self.st = storage
 
         self.heights_map = {
-            -1: ('-1', COLOR_MAP_H1),
-            0: ('0', COLOR_MAP_H2),
-            1: ('1', COLOR_MAP_H3),
-            2: ('2', COLOR_MAP_H4),
-            3: ('3', COLOR_MAP_H5),
-            4: ('4', COLOR_MAP_H6),
-            5: ('5', COLOR_MAP_H7),
-            6: ('6', COLOR_MAP_H8),
-            7: ('7', COLOR_MAP_H9),
-            8: ('8', COLOR_MAP_H10),
+            0: ('0', COLOR_MAP_H1),
+            1: ('1', COLOR_MAP_H2),
+            2: ('2', COLOR_MAP_H3),
+            3: ('3', COLOR_MAP_H4),
+            4: ('4', COLOR_MAP_H5),
+            5: ('5', COLOR_MAP_H6),
+            6: ('6', COLOR_MAP_H7),
+            7: ('7', COLOR_MAP_H8),
+            8: ('8', COLOR_MAP_H9),
         }
 
         self.st.scene_size = scene_size
