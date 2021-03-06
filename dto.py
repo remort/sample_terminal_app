@@ -1,3 +1,5 @@
+import typing as t
+
 from dataclasses import dataclass
 
 
@@ -6,8 +8,9 @@ class Tile:
     x: int
     y: int
     ch: str
-    attr: int
+    color: int
     height: int
+    attr: t.Optional[int] = None
 
 
 @dataclass()

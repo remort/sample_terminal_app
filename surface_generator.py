@@ -8,10 +8,13 @@ Point = t.Tuple[int, int]
 Coordinates = t.Tuple[Point, Point, Point, Point]
 
 
-class MapGen:
+class SurfaceGenerator:
     def __init__(self, scale):
         if scale < 2 or scale > 10:
             raise ValueError('Size should lays in 2..10.')
+
+        self.scale = scale
+        self.initial_value = -10
 
         self.heights_spectre = 8
         # 2 ** 3 == 8
@@ -20,8 +23,8 @@ class MapGen:
 
         self.steps_to_finish = scale - 1
         self.size: int = self.get_map_size(scale)
-        self.map: t.List[t.List[int]] = self.init_map()
         self.coords: Coordinates = self.get_map_corners_coords()
+        self.surface: t.List[t.List[int]] = self.init_map()
 
     @staticmethod
     def get_map_size(scale: int) -> int:
@@ -32,8 +35,11 @@ class MapGen:
         """2.5 -> 3, 2.4 -> 2, unlike modern round()."""
         return int(x + 0.5)
 
-    def get_random_factor(self) -> int:
-        value = random.getrandbits(1)
+    def get_random_factor(self) -> float:
+        if self.steps_to_finish == self.scale - 1:
+            value = random.getrandbits(10) / 2500
+        else:
+            value = random.getrandbits(10) / 3500
         if not value:
             return 0
         return value if random.getrandbits(1) else -value
@@ -42,26 +48,53 @@ class MapGen:
         # works much faster than random.randint()
         return random.getrandbits(3)
 
+    def get_distanced_randoms_for_surface_corners(self) -> t.Tuple[int, int, int, int]:
+        tl_height = self.get_rand_height()
+        tr_height = self.get_rand_height()
+        while abs(tl_height - tr_height) <= 3:
+            tr_height = self.get_rand_height()
+
+        br_height = self.get_rand_height()
+        while abs(tr_height - br_height) <= 2 or tl_height == br_height:
+            br_height = self.get_rand_height()
+
+        bl_height = self.get_rand_height()
+        while bl_height in (tl_height, tr_height, br_height):
+            bl_height = self.get_rand_height()
+
+        return tl_height, tr_height, br_height, bl_height
+
+    def set_surface_corners(self, tl_height, tr_height, br_height, bl_height):
+        tl = self.coords[0]
+        tr = self.coords[1]
+        br = self.coords[2]
+        bl = self.coords[3]
+
+        self.surface[tl[0]][tl[1]] = tl_height
+        self.surface[tr[0]][tr[1]] = tr_height
+        self.surface[br[0]][br[1]] = br_height
+        self.surface[bl[0]][bl[1]] = bl_height
+
     def init_map(self) -> t.List[t.List[int]]:
         matrix = list()
         for x in range(0, self.size):
             row = list()
             for y in range(0, self.size):
-                if x in (0, self.size - 1) and y in (0, self.size - 1):
-                    row.append(self.get_rand_height() + self.get_random_factor())
-                else:
-                    row.append(-1)
+                row.append(self.initial_value)
             matrix.append(row)
 
-        return matrix
+        self.surface = matrix
+        self.set_surface_corners(*self.get_distanced_randoms_for_surface_corners())
+
+        return self.surface
 
     def get_map_corners_coords(self):
         end = self.size - 1
         return (
             (0, 0),
             (0, end),
-            (end, 0),
             (end, end),
+            (end, 0),
         )
 
     def get_coords_mid_point_pos(self, coords: Coordinates) -> Point:
@@ -70,23 +103,16 @@ class MapGen:
             self.get_middle(coords[1][1], coords[0][1]),
         )
 
-    def calc_avg_for_coords(self, coords: Coordinates) -> int:
-        avg = sum((
-            self.map[coords[0][0]][coords[0][1]],
-            self.map[coords[1][0]][coords[1][1]],
-            self.map[coords[2][0]][coords[2][1]],
-            self.map[coords[3][0]][coords[3][1]],
-        )) / 4
+    def calc_center_point_avg(self, coords: Coordinates) -> int:
+        return self.calc_four_points_avg(*coords)
 
-        return self.round(avg + self.get_random_factor())
-
-    def calc_four_points_avg(self, point_1: Point, point_2: Point, point_3: Point, point_4: Point) -> int:
+    def calc_four_points_avg(self, point_1: Point, point_2: Point, point_3: Point, point_4: t.Optional[Point]) -> int:
         avg = sum((
-            self.map[point_1[0]][point_1[1]],
-            self.map[point_2[0]][point_2[1]],
-            self.map[point_3[0]][point_3[1]],
-            self.map[point_4[0]][point_3[1]] if point_4 else 0,
-        )) / 4 if point_4 else 3
+            self.surface[point_1[0]][point_1[1]],
+            self.surface[point_2[0]][point_2[1]],
+            self.surface[point_3[0]][point_3[1]],
+            self.surface[point_4[0]][point_4[1]] if point_4 is not None else 0,
+        )) / (4 if point_4 else 3)
 
         return self.round(avg + self.get_random_factor())
 
@@ -96,54 +122,56 @@ class MapGen:
         return coords[1][1] - coords[0][1] + 1
 
     def set_center_point_for_coords(self, coords: Coordinates) -> None:
-        avg_val = self.calc_avg_for_coords(coords)
+        avg_val = self.calc_center_point_avg(coords)
         center_point = self.get_coords_mid_point_pos(coords)
-        self.map[center_point[0]][center_point[1]] = avg_val
+        self.surface[center_point[0]][center_point[1]] = avg_val
 
     def set_edge_midpoints_for_coords(self, coords: Coordinates, edge_size: int) -> None:
         center_point = self.get_coords_mid_point_pos(coords)
 
+        edge_size_from_0 = edge_size - 1
+
         upper_mid_point = None
-        upper_mid_point_x = center_point[0] - edge_size
+        upper_mid_point_x = center_point[0] - edge_size_from_0
         if upper_mid_point_x > 0:
             upper_mid_point = (upper_mid_point_x, center_point[1])
 
         lower_mid_point = None
-        lower_mid_point_x = center_point[0] + edge_size
+        lower_mid_point_x = center_point[0] + edge_size_from_0
         if lower_mid_point_x < self.size:
             lower_mid_point = (lower_mid_point_x, center_point[1])
 
         rightmost_mid_point = None
-        righmost_mid_point_y = center_point[1] + edge_size
+        righmost_mid_point_y = center_point[1] + edge_size_from_0
         if righmost_mid_point_y < self.size:
             rightmost_mid_point = (center_point[0], righmost_mid_point_y)
 
         leftmost_mid_point = None
-        leftmost_mid_point_y = center_point[1] - edge_size
+        leftmost_mid_point_y = center_point[1] - edge_size_from_0
         if leftmost_mid_point_y > self.size:
             leftmost_mid_point = (center_point[0], leftmost_mid_point_y)
 
         # top edge center point
-        if self.map[coords[0][0]][center_point[1]] == -1:
-            self.map[coords[0][0]][center_point[1]] = self.calc_four_points_avg(
+        if self.surface[coords[0][0]][center_point[1]] == self.initial_value:
+            self.surface[coords[0][0]][center_point[1]] = self.calc_four_points_avg(
                 coords[0], coords[1], center_point, upper_mid_point
             )
 
         # bottom edge center point
-        if self.map[coords[3][0]][center_point[1]] == -1:
-            self.map[coords[3][0]][center_point[1]] = self.calc_four_points_avg(
+        if self.surface[coords[3][0]][center_point[1]] == self.initial_value:
+            self.surface[coords[3][0]][center_point[1]] = self.calc_four_points_avg(
                 coords[3], coords[2], center_point, lower_mid_point
             )
 
         # right edge center point
-        if self.map[center_point[0]][coords[2][1]] == -1:
-            self.map[center_point[0]][coords[2][1]] = self.calc_four_points_avg(
+        if self.surface[center_point[0]][coords[2][1]] == self.initial_value:
+            self.surface[center_point[0]][coords[2][1]] = self.calc_four_points_avg(
                 coords[1], coords[2], center_point, rightmost_mid_point
             )
 
         # left edge center point
-        if self.map[center_point[0]][coords[3][1]] == -1:
-            self.map[center_point[0]][coords[3][1]] = self.calc_four_points_avg(
+        if self.surface[center_point[0]][coords[3][1]] == self.initial_value:
+            self.surface[center_point[0]][coords[3][1]] = self.calc_four_points_avg(
                 coords[0], coords[3], center_point, leftmost_mid_point
             )
 
@@ -151,11 +179,6 @@ class MapGen:
         return (int_one + int_two) // 2
 
     def get_subsquares_coords(self, coords: Coordinates) -> t.Tuple[Coordinates, ...]:
-        # top left point = coords[0]
-        # top right point = coords[1]
-        # bottom right point = coords[2]
-        # bottom left point = coords[3]
-
         center_point = (self.get_middle(coords[2][0], coords[1][0]), self.get_middle(coords[1][1], coords[0][1]))
         rows_diff = self.get_middle(coords[3][0], coords[0][0])
         cols_diff = self.get_middle(coords[1][1], coords[0][1])
@@ -201,9 +224,10 @@ class MapGen:
         return new_coords_set
 
     def print(self):
-        pprint(self.map, width=200)
+        width = self.size * 3 + 2
+        pprint(self.surface, width=width)
 
-    def gen(self) -> None:
+    def gen(self, print: bool = False):
         coords_set = self.run_algo([self.coords])
 
         while True:
@@ -214,27 +238,35 @@ class MapGen:
             coords_set = new_coords_set
             self.steps_to_finish -= 1
 
+        if print:
+            self.print()
 
-class MapGenTest(MapGen):
+        return self.surface, self.size
+
+
+class SurfaceGeneratorTest(SurfaceGenerator):
     def __init__(self):
-        super(MapGenTest, self).__init__(scale=4)
-        self.expected_map = [[5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5],
-                             [3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3],
-                             [3, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 4, 3, 3],
-                             [3, 3, 3, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 3, 3],
-                             [3, 2, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 2, 3],
-                             [3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3],
-                             [3, 2, 3, 2, 3, 3, 4, 3, 4, 3, 4, 3, 3, 2, 3, 2, 3],
-                             [3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3],
-                             [3, 2, 2, 2, 3, 2, 3, 3, 5, 3, 3, 2, 3, 2, 2, 2, 3],
-                             [3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4, 4, 3, 3, 3, 3],
-                             [3, 2, 3, 2, 3, 2, 4, 3, 3, 3, 4, 3, 4, 2, 3, 2, 3],
-                             [3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 4, 3, 3, 3, 3],
-                             [3, 2, 2, 2, 4, 3, 3, 2, 3, 2, 3, 3, 4, 2, 2, 2, 3],
-                             [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-                             [3, 2, 4, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3, 2, 4, 2, 3],
-                             [3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3],
-                             [5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 5]]
+        super(SurfaceGeneratorTest, self).__init__(scale=4)
+        self.expected_surface = [[1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+                                 [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+                                 [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+                                 [7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]]
+
+    def get_distanced_randoms_for_surface_corners(self) -> t.Tuple[int, int, int, int]:
+        return 1, 3, 5, 7
 
     def get_random_factor(self):
         return 0
@@ -243,11 +275,10 @@ class MapGenTest(MapGen):
         return 5
 
     def test(self):
-        self.gen()
-        assert self.map == self.expected_map
+        self.gen(print=True)
+        assert self.surface == self.expected_surface
 
 
 if __name__ == "__main__":
-    map_gen = MapGen(6)
-    map_gen.gen()
-    map_gen.print()
+    SurfaceGenerator(2).gen(print=True)
+    SurfaceGeneratorTest().test()

@@ -2,11 +2,12 @@ import curses
 
 from colors import COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
 from storage import RuntimeStorage
+from tools import Pad
 
 
 class StatusBarController:
     def __init__(self, pad, storage: RuntimeStorage):
-        self._pad = pad
+        self._pad: Pad = pad
         self.st = storage
         self.do_animation()
 
@@ -14,7 +15,7 @@ class StatusBarController:
 
     def print_status(self):
         screen_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
-        map_size = f'{self.st.map_size.h}x{self.st.map_size.w}'
+        map_size = f'{self.st.map_size}x{self.st.map_size}'
         screen_most_point = f'{self.st.scene_coords.br.y},{self.st.scene_coords.br.x}'
 
         actor_location = f'{self.st.actor_location.y}x{self.st.actor_location.x}'

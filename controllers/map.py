@@ -1,35 +1,54 @@
 import curses
-import random
 
+from colors import (
+    COLOR_MAP_H2,
+    COLOR_MAP_H3,
+    COLOR_MAP_H4,
+    COLOR_MAP_H5,
+    COLOR_MAP_H6,
+    COLOR_MAP_H7,
+    COLOR_MAP_H8,
+    COLOR_MAP_H9,
+    COLOR_MAP_H10,
+    COLOR_MAP_H1,
+)
 from dto import Coordinates, Point, Size, Tile
 from storage import RuntimeStorage
-from utils import make_coordinates_from_size
+from utils import make_coordinates_by_size
 
 
 class MapController:
-    def __init__(self, pad, storage: RuntimeStorage, pad_size: Size, screen_size: Size):
+    def __init__(self, pad, storage: RuntimeStorage, screen_size: Size):
         self.st = storage
 
+        self.heights_map = {
+            -1: ('-1', COLOR_MAP_H1),
+            0: ('0', COLOR_MAP_H2),
+            1: ('1', COLOR_MAP_H3),
+            2: ('2', COLOR_MAP_H4),
+            3: ('3', COLOR_MAP_H5),
+            4: ('4', COLOR_MAP_H6),
+            5: ('5', COLOR_MAP_H7),
+            6: ('6', COLOR_MAP_H8),
+            7: ('7', COLOR_MAP_H9),
+            8: ('8', COLOR_MAP_H10),
+        }
+
         self.st.scene_size = Size(w=screen_size.w, h=screen_size.h)
-        self.st.map_size = Size(w=pad_size.w, h=pad_size.h)
+        self.st.scene_coords = make_coordinates_by_size(screen_size)
 
-        self.st.scene_coords = make_coordinates_from_size(screen_size)
-        self.st.map_coords = make_coordinates_from_size(pad_size)
-
-        self.st.map = self._generate_map(pad_size.w, pad_size.h)
-
+        self.st.map = self._generate_map_from_surface()
         self._pad = pad
 
         self.calculate_initial_screen_position()
         self.draw_surface()
 
-    @staticmethod
-    def _generate_map(pad_w, pad_h):
-        _map = []
-        for y in range(0, pad_h):
-            line = []
-            for x in range(0, pad_w):
-                line.append(Tile(x=x, y=y, ch=random.choice('.,_'), attr=curses.A_DIM, height=random.randint(0, 5)))
+    def _generate_map_from_surface(self):
+        _map = list()
+        for y, row in enumerate(self.st.surface):
+            line = list()
+            for x, col in enumerate(row):
+                line.append(Tile(x=x, y=y, ch=self.heights_map[col][0], color=self.heights_map[col][1], height=col))
             _map.append(line)
         return _map
 
@@ -44,12 +63,17 @@ class MapController:
             self.scroll_h(-1)
 
     def calculate_initial_screen_position(self):
-        if self.st.scene_size.w > self.st.map_size.w or self.st.scene_size.h > self.st.map_size.h:
-            pass
+        if self.st.scene_size.w > self.st.map_size or self.st.scene_size.h > self.st.map_size:
+            raise ValueError(
+                'Screen ({}x{}) can not be larger than a map: {}.'.format(
+                self.st.scene_size.w,
+                self.st.scene_size.h,
+                self.st.map_size,
+            ))
         else:
-            lx = (self.st.map_size.w - self.st.scene_size.w) // 2 + (self.st.map_size.w - self.st.scene_size.w) % 2
+            lx = (self.st.map_size - self.st.scene_size.w) // 2 + (self.st.map_size - self.st.scene_size.w) % 2
             rx = lx + self.st.scene_size.w
-            ty = (self.st.map_size.h - self.st.scene_size.h) // 2 + (self.st.map_size.h - self.st.scene_size.h) % 2
+            ty = (self.st.map_size - self.st.scene_size.h) // 2 + (self.st.map_size - self.st.scene_size.h) % 2
             by = ty + self.st.scene_size.h
             self.st.screen_pad_coords = Coordinates(
                 tl=Point(x=lx, y=ty), tr=Point(x=rx, y=ty), br=Point(x=rx, y=by), bl=Point(x=lx, y=by)
@@ -62,7 +86,7 @@ class MapController:
                 self.refresh()
                 return
 
-        if self.st.screen_pad_coords.br.y >= self.st.map_size.h:
+        if self.st.screen_pad_coords.br.y >= self.st.map_size:
             if step < 0:
                 self.st.screen_is_most_bottom = True
                 self.refresh()
@@ -83,7 +107,7 @@ class MapController:
         self.refresh()
 
     def scroll_h(self, step):
-        if self.st.screen_pad_coords.tr.x >= self.st.map_size.w:
+        if self.st.screen_pad_coords.tr.x >= self.st.map_size:
             if step > 0:
                 self.st.screen_is_most_right = True
                 self.refresh()
@@ -112,7 +136,7 @@ class MapController:
     def draw_surface(self):
         for row in self.st.map:
             for tile in row:
-                self._pad.addch(tile.y, tile.x, tile.ch, tile.attr)
+                self._pad.print(tile.ch, tile.y, tile.x, cpn=tile.color)
         self.refresh()
 
     def refresh(self):
