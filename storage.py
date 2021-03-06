@@ -4,18 +4,17 @@ from dto import Coordinates, Point, Size, Tile
 
 class RuntimeStorage:
     def __init__(self):
-        self.scene_size: t.Optional[Size] = None
+        self.map_scale: t.Optional[int] = None
         self.map_size: t.Optional[int] = None
-
-        self.scene_coords: t.Optional[Coordinates] = None
         self.map_coords: t.Optional[Coordinates] = None
-
-        self.screen_pad_coords: t.Optional[Coordinates] = None
 
         self.surface: t.List[t.List[int]] = []
         self.map: t.Optional[t.List[t.List[Tile]]] = None
-
         self.bar_height: int = 1
+
+        self.scene_size: t.Optional[Size] = None
+        self.scene_coords: t.Optional[Coordinates] = None
+        self.scene_on_map_coords: t.Optional[Coordinates] = None
 
         self.actor_screen_center_offset: t.Optional[Point] = None
         self.actor_location: t.Optional[Point] = None

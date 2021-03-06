@@ -8,6 +8,10 @@ Point = t.Tuple[int, int]
 Coordinates = t.Tuple[Point, Point, Point, Point]
 
 
+def get_map_size_by_scale(scale: int) -> int:
+    return 2 ** scale + 1
+
+
 class SurfaceGenerator:
     def __init__(self, scale):
         if scale < 2 or scale > 10:
@@ -22,13 +26,9 @@ class SurfaceGenerator:
         self.roughness_factor = self.heights_spectre // 2
 
         self.steps_to_finish = scale - 1
-        self.size: int = self.get_map_size(scale)
+        self.size: int = get_map_size_by_scale(scale)
         self.coords: Coordinates = self.get_map_corners_coords()
         self.surface: t.List[t.List[int]] = self.init_map()
-
-    @staticmethod
-    def get_map_size(scale: int) -> int:
-        return 2 ** scale + 1
 
     @staticmethod
     def round(x):
@@ -241,7 +241,7 @@ class SurfaceGenerator:
         if print:
             self.print()
 
-        return self.surface, self.size
+        return self.surface
 
 
 class SurfaceGeneratorTest(SurfaceGenerator):

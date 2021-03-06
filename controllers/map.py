@@ -18,7 +18,7 @@ from utils import make_coordinates_by_size
 
 
 class MapController:
-    def __init__(self, pad, storage: RuntimeStorage, screen_size: Size):
+    def __init__(self, pad, storage: RuntimeStorage, scene_size: Size):
         self.st = storage
 
         self.heights_map = {
@@ -34,8 +34,8 @@ class MapController:
             8: ('8', COLOR_MAP_H10),
         }
 
-        self.st.scene_size = Size(w=screen_size.w, h=screen_size.h)
-        self.st.scene_coords = make_coordinates_by_size(screen_size)
+        self.st.scene_size = scene_size
+        self.st.scene_coords = make_coordinates_by_size(scene_size)
 
         self.st.map = self._generate_map_from_surface()
         self._pad = pad
@@ -66,27 +66,29 @@ class MapController:
         if self.st.scene_size.w > self.st.map_size or self.st.scene_size.h > self.st.map_size:
             raise ValueError(
                 'Screen ({}x{}) can not be larger than a map: {}.'.format(
-                self.st.scene_size.w,
-                self.st.scene_size.h,
-                self.st.map_size,
-            ))
+                    self.st.scene_size.w,
+                    self.st.scene_size.h,
+                    self.st.map_size,
+                ))
         else:
-            lx = (self.st.map_size - self.st.scene_size.w) // 2 + (self.st.map_size - self.st.scene_size.w) % 2
+            map_edge = self.st.map_size -1
+            lx = (map_edge - self.st.scene_size.w) // 2 + (map_edge - self.st.scene_size.w) % 2
             rx = lx + self.st.scene_size.w
-            ty = (self.st.map_size - self.st.scene_size.h) // 2 + (self.st.map_size - self.st.scene_size.h) % 2
+            ty = (map_edge - self.st.scene_size.h) // 2 + (map_edge - self.st.scene_size.h) % 2
             by = ty + self.st.scene_size.h
-            self.st.screen_pad_coords = Coordinates(
+
+            self.st.scene_on_map_coords = Coordinates(
                 tl=Point(x=lx, y=ty), tr=Point(x=rx, y=ty), br=Point(x=rx, y=by), bl=Point(x=lx, y=by)
             )
 
     def scroll_v(self, step):
-        if self.st.screen_pad_coords.tl.y <= 0:
+        if self.st.scene_on_map_coords.tl.y <= 0:
             if step > 0:
                 self.st.screen_is_most_top = True
                 self.refresh()
                 return
 
-        if self.st.screen_pad_coords.br.y >= self.st.map_size:
+        if self.st.scene_on_map_coords.br.y >= self.st.map_size:
             if step < 0:
                 self.st.screen_is_most_bottom = True
                 self.refresh()
@@ -96,10 +98,10 @@ class MapController:
             self.refresh()
             return
 
-        self.st.screen_pad_coords.tl.y -= step
-        self.st.screen_pad_coords.tr.y -= step
-        self.st.screen_pad_coords.br.y -= step
-        self.st.screen_pad_coords.bl.y -= step
+        self.st.scene_on_map_coords.tl.y -= step
+        self.st.scene_on_map_coords.tr.y -= step
+        self.st.scene_on_map_coords.br.y -= step
+        self.st.scene_on_map_coords.bl.y -= step
 
         self.st.screen_is_most_top = False
         self.st.screen_is_most_bottom = False
@@ -107,13 +109,13 @@ class MapController:
         self.refresh()
 
     def scroll_h(self, step):
-        if self.st.screen_pad_coords.tr.x >= self.st.map_size:
+        if self.st.scene_on_map_coords.tr.x >= self.st.map_size:
             if step > 0:
                 self.st.screen_is_most_right = True
                 self.refresh()
                 return
 
-        if self.st.screen_pad_coords.tl.x <= 0:
+        if self.st.scene_on_map_coords.tl.x <= 0:
             if step < 0:
                 self.st.screen_is_most_left = True
                 self.refresh()
@@ -123,10 +125,10 @@ class MapController:
             self.refresh()
             return
 
-        self.st.screen_pad_coords.tl.x += step
-        self.st.screen_pad_coords.tr.x += step
-        self.st.screen_pad_coords.br.x += step
-        self.st.screen_pad_coords.bl.x += step
+        self.st.scene_on_map_coords.tl.x += step
+        self.st.scene_on_map_coords.tr.x += step
+        self.st.scene_on_map_coords.br.x += step
+        self.st.scene_on_map_coords.bl.x += step
 
         self.st.screen_is_most_right = False
         self.st.screen_is_most_left = False
@@ -141,7 +143,7 @@ class MapController:
 
     def refresh(self):
         self._pad.noutrefresh(
-            self.st.screen_pad_coords.tl.y, self.st.screen_pad_coords.tl.x,
+            self.st.scene_on_map_coords.tl.y, self.st.scene_on_map_coords.tl.x,
             0, 0,
             self.st.scene_coords.br.y, self.st.scene_coords.br.x,
         )

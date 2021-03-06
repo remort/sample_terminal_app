@@ -14,10 +14,10 @@ class ActorControler:
         self.draw_actor()
 
     def get_screen_center(self):
-        rx = self.st.screen_pad_coords.tr.x
-        lx = self.st.screen_pad_coords.tl.x
-        ty = self.st.screen_pad_coords.tl.y
-        by = self.st.screen_pad_coords.bl.y
+        rx = self.st.scene_on_map_coords.tr.x
+        lx = self.st.scene_on_map_coords.tl.x
+        ty = self.st.scene_on_map_coords.tl.y
+        by = self.st.scene_on_map_coords.bl.y
 
         return Point(
             x=(rx - lx) // 2 + (rx - lx) % 2,
@@ -98,8 +98,8 @@ class ActorControler:
     def update_actor_location(self):
         actor_on_screen_coords = self.get_actor_on_screen_coords()
         actor_on_map_coords = Point(
-            x=actor_on_screen_coords.x + self.st.screen_pad_coords.tl.x,
-            y=actor_on_screen_coords.y + self.st.screen_pad_coords.tl.y,
+            x=actor_on_screen_coords.x + self.st.scene_on_map_coords.tl.x,
+            y=actor_on_screen_coords.y + self.st.scene_on_map_coords.tl.y,
         )
         self.st.actor_location = actor_on_map_coords
 
