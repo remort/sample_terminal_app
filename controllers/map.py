@@ -41,6 +41,20 @@ class MapController(BaseController):
         tile.is_veiled = False
         self._pad.print(tile.ch, tile.y, tile.x, cp=tile.color)
 
+    def is_prev_tile_unveiled(self, ap: Point, tile: Tile) -> bool:
+        prev_tile_coords = Point(x=tile.x, y=tile.y)
+
+        if tile.x > ap.x:
+            prev_tile_coords.x -= 1
+        if tile.x < ap.x:
+            prev_tile_coords.x += 1
+        if tile.y > ap.y:
+            prev_tile_coords.y -= 1
+        if tile.y < ap.y:
+            prev_tile_coords.y += 1
+
+        return not self.st.map[prev_tile_coords.y][prev_tile_coords.x].is_veiled
+
     def unveil_map(self):
         actor_p = self.st.actor_location
         curr_h = self.st.curr_height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
@@ -69,26 +83,30 @@ class MapController(BaseController):
 
                 # +3 tile actor surroundings
                 elif x_offset <= 3 and y_offset <= 3:
-                    if tile.height <= curr_h:
+                    if tile.height == curr_h:
+                        self.unveil_tile(tile)
+                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
                         self.unveil_tile(tile)
                     if tile.height == curr_h + 1:
                         self.unveil_tile(tile)
 
                 # +4 tile actor surroundings
                 elif x_offset <= 4 and y_offset <= 4:
-                    if x_offset != y_offset:
-                        if tile.height <= curr_h:
+                    if tile.height == curr_h:
+                        if x_offset != y_offset:
                             self.unveil_tile(tile)
+                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
+                        self.unveil_tile(tile)
 
                 # +5 tile actor surroundings
                 elif x_offset <= 6 and y_offset <= 6:
-                    if tile.height < curr_h:
+                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
                         self.unveil_tile(tile)
 
                 # +6 tile actor surroundings
                 elif x_offset <= 6 and y_offset <= 6:
-                    if x_offset != y_offset:
-                        if tile.height < curr_h:
+                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
+                        if x_offset != y_offset:
                             self.unveil_tile(tile)
 
     def process_event(self, key):
