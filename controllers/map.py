@@ -56,6 +56,9 @@ class MapController(BaseController):
         return not self.st.map[prev_tile_coords.y][prev_tile_coords.x].is_veiled
 
     def unveil_map(self):
+        if self.st.debug:
+            return
+
         actor_p = self.st.actor_location
         curr_h = self.st.curr_height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
 
@@ -186,9 +189,15 @@ class MapController(BaseController):
         self.st.screen_is_most_left = False
 
     def draw_surface(self):
-        for row in self.st.map:
-            for tile in row:
-                self._pad.print(self.unveiled_tile_char, tile.y, tile.x, cp=COLOR_UNVEILED_MAP)
+        if self.st.debug:
+            for row in self.st.map:
+                for tile in row:
+                    self._pad.print(tile.ch, tile.y, tile.x, cp=tile.color)
+        else:
+            for row in self.st.map:
+                for tile in row:
+                    self._pad.print(self.unveiled_tile_char, tile.y, tile.x, cp=COLOR_UNVEILED_MAP)
+
         self.refresh()
 
     def refresh(self):

@@ -22,6 +22,8 @@ class AnimationRunner:
         self._step_waits = self._st.heights_to_wait_time_map
 
     def calc_wait_time(self) -> float:
+        if self._st.debug:
+            return 0
         tile = self._st.map[self._st.actor_location.y][self._st.actor_location.x]
         return self._step_waits[tile.height]
 

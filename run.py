@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import argparse
 import curses
 from curses import wrapper
 
@@ -15,18 +15,33 @@ from tools import Pad
 from utils import get_map_scale_by_screen_size, make_map_coordinates_by_map_size
 
 
-def main(stdscr):
-    curses.curs_set(0)
-    init_color_pairs()
-
-    screen_height, screen_width = stdscr.getmaxyx()
-
+def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
     storage = RuntimeStorage()
 
     storage.map_scale = get_map_scale_by_screen_size(screen_height, screen_width)
     storage.map_size = get_map_size_by_scale(storage.map_scale)
     storage.map_coords = make_map_coordinates_by_map_size(storage.map_size)
     storage.surface = SurfaceGenerator(storage.map_scale).gen()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--debug', action='store_true',
+        help='Run in debug mode. This unveils map on start, runs no map discover on every move, moves faster.',
+    )
+    args = parser.parse_args()
+    if args.debug:
+        storage.debug = True
+
+    return storage
+
+
+def main(stdscr: curses.window) -> None:
+    curses.curs_set(0)
+    init_color_pairs()
+
+    screen_height, screen_width = stdscr.getmaxyx()
+
+    storage = configure(screen_height, screen_width)
 
     kb_pad = Pad(1, 1)
     map_pad = Pad(storage.map_size+1, storage.map_size+1)

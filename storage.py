@@ -47,6 +47,9 @@ class RuntimeStorage:
         # Current tile height.
         self.curr_height: t.Optional[int] = None
 
+        # Unveils map, do not discover map on move, makes move speed high.
+        self.debug: bool = False
+
         # Flags designates if actor reached the border of the map.
         self.screen_is_most_top: bool = False
         self.screen_is_most_bottom: bool = False
