@@ -4,8 +4,9 @@ import random
 import typing as t
 from pprint import pprint
 
-Point = t.Tuple[int, int]
-Coordinates = t.Tuple[Point, Point, Point, Point]
+SurfacePoint = t.Tuple[int, int]
+SurfaceCoords = t.Tuple[SurfacePoint, SurfacePoint, SurfacePoint, SurfacePoint]
+Surface = t.List[t.List[int]]
 
 
 def get_map_size_by_scale(scale: int) -> int:
@@ -13,29 +14,29 @@ def get_map_size_by_scale(scale: int) -> int:
 
 
 class SurfaceGenerator:
-    def __init__(self, scale):
+    def __init__(self, scale: int) -> None:
         if scale < 2 or scale > 10:
             raise ValueError('Size should lays in 2..10.')
 
-        self.scale = scale
-        self.initial_value = -10
+        self.scale: int = scale
+        self.initial_value: int = -10
 
-        self.heights_spectre = 8
+        self.heights_spectre: int = 8
         # 2 ** 3 == 8
-        self.heights_spectre_bits = 3
-        self.roughness_factor = self.heights_spectre // 2
+        self.heights_spectre_bits: int = 3
+        self.roughness_factor: int = self.heights_spectre // 2
 
-        self.steps_to_finish = scale - 1
+        self.steps_to_finish: int = scale - 1
         self.size: int = get_map_size_by_scale(scale)
-        self.coords: Coordinates = self.get_map_corners_coords()
-        self.surface: t.List[t.List[int]] = self.init_map()
+        self.coords: SurfaceCoords = self.get_map_corners_coords()
+        self.surface: Surface = self.init_map()
 
     @staticmethod
-    def round(x):
+    def round(x: float):
         """2.5 -> 3, 2.4 -> 2, unlike modern round()."""
         return int(x + 0.5)
 
-    def get_random_factor(self) -> float:
+    def get_random_factor(self) -> t.Union[float, int]:
         if self.steps_to_finish == self.scale - 1:
             value = random.getrandbits(10) / 2500
         else:
@@ -64,7 +65,7 @@ class SurfaceGenerator:
 
         return tl_height, tr_height, br_height, bl_height
 
-    def set_surface_corners(self, tl_height, tr_height, br_height, bl_height):
+    def set_surface_corners(self, tl_height: int, tr_height: int, br_height: int, bl_height: int) -> None:
         tl = self.coords[0]
         tr = self.coords[1]
         br = self.coords[2]
@@ -75,7 +76,7 @@ class SurfaceGenerator:
         self.surface[br[0]][br[1]] = br_height
         self.surface[bl[0]][bl[1]] = bl_height
 
-    def init_map(self) -> t.List[t.List[int]]:
+    def init_map(self) -> Surface:
         matrix = list()
         for x in range(0, self.size):
             row = list()
@@ -88,7 +89,7 @@ class SurfaceGenerator:
 
         return self.surface
 
-    def get_map_corners_coords(self):
+    def get_map_corners_coords(self) -> SurfaceCoords:
         end = self.size - 1
         return (
             (0, 0),
@@ -97,16 +98,22 @@ class SurfaceGenerator:
             (end, 0),
         )
 
-    def get_coords_mid_point_pos(self, coords: Coordinates) -> Point:
+    def get_coords_mid_point_pos(self, coords: SurfaceCoords) -> SurfacePoint:
         return (
             self.get_middle(coords[2][0], coords[1][0]),
             self.get_middle(coords[1][1], coords[0][1]),
         )
 
-    def calc_center_point_avg(self, coords: Coordinates) -> int:
+    def calc_center_point_avg(self, coords: SurfaceCoords) -> int:
         return self.calc_four_points_avg(*coords)
 
-    def calc_four_points_avg(self, point_1: Point, point_2: Point, point_3: Point, point_4: t.Optional[Point]) -> int:
+    def calc_four_points_avg(
+            self,
+            point_1: SurfacePoint,
+            point_2: SurfacePoint,
+            point_3: SurfacePoint,
+            point_4: t.Optional[SurfacePoint],
+    ) -> int:
         avg = sum((
             self.surface[point_1[0]][point_1[1]],
             self.surface[point_2[0]][point_2[1]],
@@ -117,16 +124,16 @@ class SurfaceGenerator:
         return self.round(avg + self.get_random_factor())
 
     @staticmethod
-    def get_edge_size_by_coords(coords: Coordinates) -> int:
+    def get_edge_size_by_coords(coords: SurfaceCoords) -> int:
         """Assume that matrix is always a square (same edges length)."""
         return coords[1][1] - coords[0][1] + 1
 
-    def set_center_point_for_coords(self, coords: Coordinates) -> None:
+    def set_center_point_for_coords(self, coords: SurfaceCoords) -> None:
         avg_val = self.calc_center_point_avg(coords)
         center_point = self.get_coords_mid_point_pos(coords)
         self.surface[center_point[0]][center_point[1]] = avg_val
 
-    def set_edge_midpoints_for_coords(self, coords: Coordinates, edge_size: int) -> None:
+    def set_edge_midpoints_for_coords(self, coords: SurfaceCoords, edge_size: int) -> None:
         center_point = self.get_coords_mid_point_pos(coords)
 
         edge_size_from_0 = edge_size - 1
@@ -178,7 +185,10 @@ class SurfaceGenerator:
     def get_middle(self, int_one: int, int_two: int) -> int:
         return (int_one + int_two) // 2
 
-    def get_subsquares_coords(self, coords: Coordinates) -> t.Tuple[Coordinates, ...]:
+    def get_subsquares_coords(
+            self, coords: SurfaceCoords,
+    ) -> t.Tuple[SurfaceCoords, SurfaceCoords, SurfaceCoords, SurfaceCoords]:
+
         center_point = (self.get_middle(coords[2][0], coords[1][0]), self.get_middle(coords[1][1], coords[0][1]))
         rows_diff = self.get_middle(coords[3][0], coords[0][0])
         cols_diff = self.get_middle(coords[1][1], coords[0][1])
@@ -210,7 +220,7 @@ class SurfaceGenerator:
 
         return tl_square_c, tr_square_c, br_square_c, bl_square_c
 
-    def run_algo(self, coords_set: t.List[Coordinates]) -> t.List[Coordinates]:
+    def run_algo(self, coords_set: t.List[SurfaceCoords]) -> t.List[SurfaceCoords]:
         edge_size = self.get_edge_size_by_coords(coords_set[0])
         new_coords_set = list()
         for coords in coords_set:
@@ -227,7 +237,7 @@ class SurfaceGenerator:
         width = self.size * 3 + 2
         pprint(self.surface, width=width)
 
-    def gen(self, print: bool = False):
+    def gen(self, print: bool = False) -> Surface:
         coords_set = self.run_algo([self.coords])
 
         while True:
@@ -245,7 +255,7 @@ class SurfaceGenerator:
 
 
 class SurfaceGeneratorTest(SurfaceGenerator):
-    def __init__(self):
+    def __init__(self) -> None:
         super(SurfaceGeneratorTest, self).__init__(scale=4)
         self.expected_surface = [[1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
                                  [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4],
@@ -268,13 +278,13 @@ class SurfaceGeneratorTest(SurfaceGenerator):
     def get_distanced_randoms_for_surface_corners(self) -> t.Tuple[int, int, int, int]:
         return 1, 3, 5, 7
 
-    def get_random_factor(self):
+    def get_random_factor(self) -> int:
         return 0
 
     def get_rand_height(self) -> int:
         return 5
 
-    def test(self):
+    def test(self) -> None:
         self.gen(print=True)
         assert self.surface == self.expected_surface
 

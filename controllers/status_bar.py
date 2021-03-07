@@ -6,14 +6,14 @@ from storage import RuntimeStorage
 
 
 class StatusBarController(BaseController):
-    def __init__(self, pad, storage: RuntimeStorage, screen_width: int):
+    def __init__(self, pad, storage: RuntimeStorage, screen_width: int) -> None:
         super().__init__(pad, storage)
 
-        self.status_bar_width = screen_width
+        self.status_bar_width: int = screen_width
         self._pad.pad.bkgd(' ', curses.color_pair(COLOR_STATUS_BAR_STATS))
         self.do_animation()
 
-    def print_status(self):
+    def print_status(self) -> None:
         scene_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
         map_size = f'{self.st.map_size}x{self.st.map_size}'
 
@@ -51,10 +51,10 @@ class StatusBarController(BaseController):
         self._pad.print(status_line, 0, len(actor_location), cp=COLOR_STATUS_BAR_STATS)
         self._pad.print(message_line, 0, message_line_start, attr=curses.A_BOLD, cp=COLOR_STATUS_BAR_MESSAGES)
 
-    def process_event(self, key):
+    def process_event(self, key: int) -> None:
         pass
 
-    def do_animation(self):
+    def do_animation(self) -> None:
         self._pad.erase()
         self.print_status()
         self._pad.noutrefresh(

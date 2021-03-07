@@ -14,12 +14,12 @@ class AnimationRunner:
             scenes: t.List[BaseController],
             storage: RuntimeStorage,
             sleep_time: t.Optional[float] = 0.05,
-    ):
-        self._kb_pad = kb_pad
-        self._scenes = scenes
-        self._st = storage
-        self._sleep_time = sleep_time
-        self._step_waits = self._st.heights_to_wait_time_map
+    ) -> None:
+        self._kb_pad: Pad = kb_pad
+        self._scenes: t.List[BaseController] = scenes
+        self._st: RuntimeStorage = storage
+        self._sleep_time: float = sleep_time
+        self._step_waits: t.Dict[int, float] = self._st.heights_to_wait_time_map
 
     def calc_wait_time(self) -> float:
         if self._st.debug:
@@ -27,7 +27,7 @@ class AnimationRunner:
         tile = self._st.map[self._st.actor_location.y][self._st.actor_location.x]
         return self._step_waits[tile.height]
 
-    def run(self):
+    def run(self) -> None:
         while True:
             key = self._kb_pad.getch()
             curses.flushinp()

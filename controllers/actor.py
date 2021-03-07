@@ -4,16 +4,17 @@ from colors import COLOR_ACTOR
 from controllers.base import BaseController
 from dto import Point, Size
 from storage import RuntimeStorage
+from tools import Pad
 
 
 class ActorControler(BaseController):
-    def __init__(self, pad, storage: RuntimeStorage):
+    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
         super().__init__(pad, storage)
 
         self.st.actor_screen_center_offset = Size(w=0, h=0)
         self.draw_actor()
 
-    def get_screen_center(self):
+    def get_screen_center(self) -> Point:
         rx = self.st.scene_on_map_coords.tr.x
         lx = self.st.scene_on_map_coords.tl.x
         ty = self.st.scene_on_map_coords.tl.y
@@ -24,7 +25,7 @@ class ActorControler(BaseController):
             y=(by - ty) // 2 + (by - ty) % 2,
         )
 
-    def process_event(self, key):
+    def process_event(self, key: int) -> None:
         if key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_LEFT):
             if key == curses.KEY_UP:
                 self.move_v(1)
@@ -37,7 +38,7 @@ class ActorControler(BaseController):
 
             self.draw_actor()
 
-    def move_v(self, step):
+    def move_v(self, step: int) -> None:
         if not self.st.screen_is_most_top and not self.st.screen_is_most_bottom:
             return
 
@@ -58,7 +59,7 @@ class ActorControler(BaseController):
                 if self.st.actor_screen_center_offset.h > 0:
                     self.st.actor_screen_center_offset.h -= 1
 
-    def move_h(self, step):
+    def move_h(self, step: int) -> None:
         if not self.st.screen_is_most_right and not self.st.screen_is_most_left:
             return
 
@@ -78,12 +79,12 @@ class ActorControler(BaseController):
                 if self.st.actor_screen_center_offset.w < 0:
                     self.st.actor_screen_center_offset.w += 1
 
-    def draw_actor(self):
+    def draw_actor(self) -> None:
         self.update_actor_location()
         self._pad.print('Ѫ', cp=COLOR_ACTOR, attr=curses.A_BOLD)
         self.refresh()
 
-    def get_actor_on_screen_coords(self):
+    def get_actor_on_screen_coords(self) -> Point:
         screen_center = self.get_screen_center()
 
         return Point(
@@ -91,7 +92,7 @@ class ActorControler(BaseController):
             x=screen_center.x + self.st.actor_screen_center_offset.w,
         )
 
-    def update_actor_location(self):
+    def update_actor_location(self) -> None:
         actor_on_screen_coords = self.get_actor_on_screen_coords()
         actor_on_map_coords = Point(
             x=actor_on_screen_coords.x + self.st.scene_on_map_coords.tl.x,
@@ -99,7 +100,7 @@ class ActorControler(BaseController):
         )
         self.st.actor_location = actor_on_map_coords
 
-    def refresh(self):
+    def refresh(self) -> None:
         actor_on_screen = self.get_actor_on_screen_coords()
 
         self._pad.noutrefresh(
@@ -108,5 +109,5 @@ class ActorControler(BaseController):
             actor_on_screen.y, actor_on_screen.x,
         )
 
-    def do_animation(self):
+    def do_animation(self) -> None:
         self.draw_actor()

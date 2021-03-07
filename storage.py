@@ -13,6 +13,8 @@ from colors import (
 )
 from dto import Coordinates, Point, Size, Tile
 
+MapType = t.List[t.List[Tile]]
+
 
 class RuntimeStorage:
     def __init__(self):
@@ -27,7 +29,7 @@ class RuntimeStorage:
         # 2-dim. array of random generated heights. Maps to self.map later.
         self.surface: t.List[t.List[int]] = []
         # 2-dim. array of map Tiles: [y,[x]] resulting from self.surface.
-        self.map: t.Optional[t.List[t.List[Tile]]] = None
+        self.map: t.Optional[MapType] = None
         # Status bar ncurses pad height.
         self.bar_height: int = 1
 
@@ -58,7 +60,7 @@ class RuntimeStorage:
 
         self.messages: t.List[str] = []
 
-        self.heights_to_colors_map = {
+        self.heights_to_colors_map: t.Dict[int, t.Tuple[str, int]] = {
             0: ('0', COLOR_MAP_H1),
             1: ('1', COLOR_MAP_H2),
             2: ('2', COLOR_MAP_H3),
@@ -70,7 +72,7 @@ class RuntimeStorage:
             8: ('8', COLOR_MAP_H9),
         }
 
-        self.heights_to_wait_time_map = {
+        self.heights_to_wait_time_map: t.Dict[int, float] = {
             0: 1.0,
             1: 0.05,
             2: 0.1,

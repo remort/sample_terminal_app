@@ -25,6 +25,6 @@ def make_map_coordinates_by_map_size(size: int) -> Coordinates:
     )
 
 
-def get_map_scale_by_screen_size(screen_height, screen_width) -> int:
+def get_map_scale_by_screen_size(screen_height: int, screen_width: int) -> int:
     power_of_2 = math.log2(max(screen_height, screen_width))
     return int(power_of_2) + 1

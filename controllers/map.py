@@ -2,13 +2,13 @@ import curses
 
 from controllers.base import BaseController
 from dto import Coordinates, Point, Size, Tile
-from storage import RuntimeStorage
+from storage import RuntimeStorage, MapType
 from utils import make_coordinates_by_size
 from colors import COLOR_UNVEILED_MAP
 
 
 class MapController(BaseController):
-    def __init__(self, pad, storage: RuntimeStorage, scene_size: Size):
+    def __init__(self, pad, storage: RuntimeStorage, scene_size: Size) -> None:
         super().__init__(pad, storage)
 
         self.st.scene_size = scene_size
@@ -17,10 +17,10 @@ class MapController(BaseController):
         self.st.map = self._generate_map_from_surface()
 
         self.calculate_initial_screen_position()
-        self.unveiled_tile_char = '.'
+        self.unveiled_tile_char: str = '.'
         self.draw_surface()
 
-    def _generate_map_from_surface(self):
+    def _generate_map_from_surface(self) -> MapType:
         _map = list()
         for y, row in enumerate(self.st.surface):
             line = list()
@@ -37,7 +37,7 @@ class MapController(BaseController):
             _map.append(line)
         return _map
 
-    def unveil_tile(self, tile):
+    def unveil_tile(self, tile: Tile) -> None:
         tile.is_veiled = False
         self._pad.print(tile.ch, tile.y, tile.x, cp=tile.color)
 
@@ -55,7 +55,7 @@ class MapController(BaseController):
 
         return not self.st.map[prev_tile_coords.y][prev_tile_coords.x].is_veiled
 
-    def unveil_map(self):
+    def unveil_map(self) -> None:
         if self.st.debug:
             return
 
@@ -112,7 +112,7 @@ class MapController(BaseController):
                         if x_offset != y_offset:
                             self.unveil_tile(tile)
 
-    def process_event(self, key):
+    def process_event(self, key: int) -> None:
         if key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_LEFT):
             if key == curses.KEY_UP:
                 self.scroll_v(1)
@@ -125,7 +125,7 @@ class MapController(BaseController):
 
             self.refresh()
 
-    def calculate_initial_screen_position(self):
+    def calculate_initial_screen_position(self) -> None:
         if self.st.scene_size.w > self.st.map_size or self.st.scene_size.h > self.st.map_size:
             raise ValueError(
                 'Screen ({}x{}) can not be larger than a map: {}.'.format(
@@ -144,7 +144,7 @@ class MapController(BaseController):
                 tl=Point(x=lx, y=ty), tr=Point(x=rx, y=ty), br=Point(x=rx, y=by), bl=Point(x=lx, y=by)
             )
 
-    def scroll_v(self, step):
+    def scroll_v(self, step: int) -> None:
         if self.st.scene_on_map_coords.tl.y <= 0:
             if step > 0:
                 self.st.screen_is_most_top = True
@@ -166,7 +166,7 @@ class MapController(BaseController):
         self.st.screen_is_most_top = False
         self.st.screen_is_most_bottom = False
 
-    def scroll_h(self, step):
+    def scroll_h(self, step: int) -> None:
         if self.st.scene_on_map_coords.tr.x >= self.st.map_size:
             if step > 0:
                 self.st.screen_is_most_right = True
@@ -188,7 +188,7 @@ class MapController(BaseController):
         self.st.screen_is_most_right = False
         self.st.screen_is_most_left = False
 
-    def draw_surface(self):
+    def draw_surface(self) -> None:
         if self.st.debug:
             for row in self.st.map:
                 for tile in row:
@@ -200,13 +200,13 @@ class MapController(BaseController):
 
         self.refresh()
 
-    def refresh(self):
+    def refresh(self) -> None:
         self._pad.noutrefresh(
             self.st.scene_on_map_coords.tl.y, self.st.scene_on_map_coords.tl.x,
             0, 0,
             self.st.scene_coords.br.y, self.st.scene_coords.br.x,
         )
 
-    def do_animation(self):
+    def do_animation(self) -> None:
         self.unveil_map()
         self.refresh()
