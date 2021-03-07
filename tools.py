@@ -21,12 +21,12 @@ class Pad:
             x=0,
             attr=curses.A_NORMAL,
             n=None,
-            cpn=COLOR_DEFAULT,
+            cp=COLOR_DEFAULT,
     ):
         if not n:
-            self._pad.addstr(y, x, string, curses.color_pair(cpn) | attr)
+            self._pad.addstr(y, x, string, curses.color_pair(cp) | attr)
         else:
-            self._pad.addnstr(y, x, string, n, curses.color_pair(cpn) | attr)
+            self._pad.addnstr(y, x, string, n, curses.color_pair(cp) | attr)
 
     def getch(self, *args, **kwargs):
         return self._pad.getch(*args, **kwargs)

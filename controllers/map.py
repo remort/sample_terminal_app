@@ -4,6 +4,7 @@ from controllers.base import BaseController
 from dto import Coordinates, Point, Size, Tile
 from storage import RuntimeStorage
 from utils import make_coordinates_by_size
+from colors import COLOR_UNVEILED_MAP
 
 
 class MapController(BaseController):
@@ -16,6 +17,7 @@ class MapController(BaseController):
         self.st.map = self._generate_map_from_surface()
 
         self.calculate_initial_screen_position()
+        self.unveiled_tile_char = '.'
         self.draw_surface()
 
     def _generate_map_from_surface(self):
@@ -35,15 +37,72 @@ class MapController(BaseController):
             _map.append(line)
         return _map
 
+    def unveil_tile(self, tile):
+        tile.is_veiled = False
+        self._pad.print(tile.ch, tile.y, tile.x, cp=tile.color)
+
+    def unveil_map(self):
+        actor_p = self.st.actor_location
+        curr_h = self.st.curr_height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
+
+        vision_x = 6
+        vision_y = 6
+
+        if actor_p.y < vision_y:
+            vision_y = actor_p.y
+
+        if actor_p.x < vision_x:
+            vision_x = actor_p.x
+
+        for row in self.st.map[actor_p.y - vision_y:actor_p.y + vision_y + 1]:
+            for tile in row[actor_p.x - vision_x:actor_p.x + vision_x + 1]:
+                x_offset = abs(tile.x - actor_p.x)
+                y_offset = abs(tile.y - actor_p.y)
+
+                # closest tiles
+                if x_offset <= 1 and y_offset <= 1:
+                    self.unveil_tile(tile)
+
+                # +2 tile actor surroundings
+                elif x_offset <= 2 and y_offset <= 2:
+                    self.unveil_tile(tile)
+
+                # +3 tile actor surroundings
+                elif x_offset <= 3 and y_offset <= 3:
+                    if tile.height <= curr_h:
+                        self.unveil_tile(tile)
+                    if tile.height == curr_h + 1:
+                        self.unveil_tile(tile)
+
+                # +4 tile actor surroundings
+                elif x_offset <= 4 and y_offset <= 4:
+                    if x_offset != y_offset:
+                        if tile.height <= curr_h:
+                            self.unveil_tile(tile)
+
+                # +5 tile actor surroundings
+                elif x_offset <= 6 and y_offset <= 6:
+                    if tile.height < curr_h:
+                        self.unveil_tile(tile)
+
+                # +6 tile actor surroundings
+                elif x_offset <= 6 and y_offset <= 6:
+                    if x_offset != y_offset:
+                        if tile.height < curr_h:
+                            self.unveil_tile(tile)
+
     def process_event(self, key):
-        if key == curses.KEY_UP:
-            self.scroll_v(1)
-        if key == curses.KEY_DOWN:
-            self.scroll_v(-1)
-        if key == curses.KEY_RIGHT:
-            self.scroll_h(1)
-        if key == curses.KEY_LEFT:
-            self.scroll_h(-1)
+        if key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_LEFT):
+            if key == curses.KEY_UP:
+                self.scroll_v(1)
+            if key == curses.KEY_DOWN:
+                self.scroll_v(-1)
+            if key == curses.KEY_RIGHT:
+                self.scroll_h(1)
+            if key == curses.KEY_LEFT:
+                self.scroll_h(-1)
+
+            self.refresh()
 
     def calculate_initial_screen_position(self):
         if self.st.scene_size.w > self.st.map_size or self.st.scene_size.h > self.st.map_size:
@@ -54,7 +113,7 @@ class MapController(BaseController):
                     self.st.map_size,
                 ))
         else:
-            map_edge = self.st.map_size -1
+            map_edge = self.st.map_size - 1
             lx = (map_edge - self.st.scene_size.w) // 2 + (map_edge - self.st.scene_size.w) % 2
             rx = lx + self.st.scene_size.w
             ty = (map_edge - self.st.scene_size.h) // 2 + (map_edge - self.st.scene_size.h) % 2
@@ -68,17 +127,14 @@ class MapController(BaseController):
         if self.st.scene_on_map_coords.tl.y <= 0:
             if step > 0:
                 self.st.screen_is_most_top = True
-                self.refresh()
                 return
 
         if self.st.scene_on_map_coords.br.y >= self.st.map_size:
             if step < 0:
                 self.st.screen_is_most_bottom = True
-                self.refresh()
                 return
 
         if self.st.actor_screen_center_offset.h != 0:
-            self.refresh()
             return
 
         self.st.scene_on_map_coords.tl.y -= step
@@ -89,23 +145,18 @@ class MapController(BaseController):
         self.st.screen_is_most_top = False
         self.st.screen_is_most_bottom = False
 
-        self.refresh()
-
     def scroll_h(self, step):
         if self.st.scene_on_map_coords.tr.x >= self.st.map_size:
             if step > 0:
                 self.st.screen_is_most_right = True
-                self.refresh()
                 return
 
         if self.st.scene_on_map_coords.tl.x <= 0:
             if step < 0:
                 self.st.screen_is_most_left = True
-                self.refresh()
                 return
 
         if self.st.actor_screen_center_offset.w != 0:
-            self.refresh()
             return
 
         self.st.scene_on_map_coords.tl.x += step
@@ -116,12 +167,10 @@ class MapController(BaseController):
         self.st.screen_is_most_right = False
         self.st.screen_is_most_left = False
 
-        self.refresh()
-
     def draw_surface(self):
         for row in self.st.map:
             for tile in row:
-                self._pad.print(tile.ch, tile.y, tile.x, cpn=tile.color)
+                self._pad.print(self.unveiled_tile_char, tile.y, tile.x, cp=COLOR_UNVEILED_MAP)
         self.refresh()
 
     def refresh(self):
@@ -132,4 +181,5 @@ class MapController(BaseController):
         )
 
     def do_animation(self):
-        pass
+        self.unveil_map()
+        self.refresh()

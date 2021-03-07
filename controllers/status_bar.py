@@ -47,9 +47,9 @@ class StatusBarController(BaseController):
 
         message_line_start = self.status_bar_width - len(message_line)
 
-        self._pad.print(actor_location, attr=curses.A_BOLD, cpn=COLOR_STATUS_BAR_STATS)
-        self._pad.print(status_line, 0, len(actor_location),  cpn=COLOR_STATUS_BAR_STATS)
-        self._pad.print(message_line, 0, message_line_start, attr=curses.A_BOLD, cpn=COLOR_STATUS_BAR_MESSAGES)
+        self._pad.print(actor_location, attr=curses.A_BOLD, cp=COLOR_STATUS_BAR_STATS)
+        self._pad.print(status_line, 0, len(actor_location), cp=COLOR_STATUS_BAR_STATS)
+        self._pad.print(message_line, 0, message_line_start, attr=curses.A_BOLD, cp=COLOR_STATUS_BAR_MESSAGES)
 
     def process_event(self, key):
         pass

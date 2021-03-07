@@ -14,6 +14,7 @@ COLOR_ACTOR = 2
 COLOR_CURRENT_COORDS = 3
 COLOR_STATUS_BAR_STATS = 4
 COLOR_STATUS_BAR_MESSAGES = 5
+COLOR_UNVEILED_MAP = 6
 
 COLOR_MAP_H1 = 100
 COLOR_MAP_H2 = 101
@@ -32,6 +33,7 @@ def init_color_pairs():
     curses.init_pair(COLOR_CURRENT_COORDS, curses.COLOR_BLUE, curses.COLOR_BLACK)
     curses.init_pair(COLOR_STATUS_BAR_STATS, curses.COLOR_RED, curses.COLOR_YELLOW)
     curses.init_pair(COLOR_STATUS_BAR_MESSAGES, curses.COLOR_BLUE, curses.COLOR_YELLOW)
+    curses.init_pair(COLOR_UNVEILED_MAP, 242, 232)
 
     curses.init_pair(COLOR_MAP_H1, 247, 17)
     curses.init_pair(COLOR_MAP_H2, 247, 77)

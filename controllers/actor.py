@@ -25,23 +25,24 @@ class ActorControler(BaseController):
         )
 
     def process_event(self, key):
-        if key == curses.KEY_UP:
-            self.move_v(1)
-        if key == curses.KEY_DOWN:
-            self.move_v(-1)
-        if key == curses.KEY_RIGHT:
-            self.move_h(1)
-        if key == curses.KEY_LEFT:
-            self.move_h(-1)
+        if key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_LEFT):
+            if key == curses.KEY_UP:
+                self.move_v(1)
+            if key == curses.KEY_DOWN:
+                self.move_v(-1)
+            if key == curses.KEY_RIGHT:
+                self.move_h(1)
+            if key == curses.KEY_LEFT:
+                self.move_h(-1)
+
+            self.draw_actor()
 
     def move_v(self, step):
         if not self.st.screen_is_most_top and not self.st.screen_is_most_bottom:
-            self.draw_actor()
             return
 
         screen_center = self.get_screen_center()
         if self.st.screen_is_most_top:
-
             if step > 0:
                 if self.st.actor_screen_center_offset.h + screen_center.y > 0:
                     self.st.actor_screen_center_offset.h -= 1
@@ -57,11 +58,8 @@ class ActorControler(BaseController):
                 if self.st.actor_screen_center_offset.h > 0:
                     self.st.actor_screen_center_offset.h -= 1
 
-        self.draw_actor()
-
     def move_h(self, step):
         if not self.st.screen_is_most_right and not self.st.screen_is_most_left:
-            self.draw_actor()
             return
 
         screen_center = self.get_screen_center()
@@ -80,11 +78,9 @@ class ActorControler(BaseController):
                 if self.st.actor_screen_center_offset.w < 0:
                     self.st.actor_screen_center_offset.w += 1
 
-        self.draw_actor()
-
     def draw_actor(self):
         self.update_actor_location()
-        self._pad.print('Ѫ', cpn=COLOR_ACTOR, attr=curses.A_BOLD)
+        self._pad.print('Ѫ', cp=COLOR_ACTOR, attr=curses.A_BOLD)
         self.refresh()
 
     def get_actor_on_screen_coords(self):
@@ -113,4 +109,4 @@ class ActorControler(BaseController):
         )
 
     def do_animation(self):
-        pass
+        self.draw_actor()

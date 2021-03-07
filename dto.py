@@ -11,6 +11,7 @@ class Tile:
     color: int
     height: int
     attr: t.Optional[int] = None
+    is_veiled: bool = True
 
 
 @dataclass()
