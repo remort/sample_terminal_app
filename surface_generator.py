@@ -21,28 +21,27 @@ class SurfaceGenerator:
         self.scale: int = scale
         self.initial_value: int = -10
 
-        self.heights_spectre: int = 8
-        # 2 ** 3 == 8
-        self.heights_spectre_bits: int = 3
-        self.roughness_factor: int = self.heights_spectre // 2
-
         self.steps_to_finish: int = scale - 1
         self.size: int = get_map_size_by_scale(scale)
         self.coords: SurfaceCoords = self.get_map_corners_coords()
         self.surface: Surface = self.init_map()
+
+        self.rnd_power = 3
+        self.rnd_denominator_base = 2 ** (self.rnd_power + 0.3)
+        self.rnd_denominator_step = self.rnd_denominator_base / (self.scale / 2)
 
     @staticmethod
     def round(x: float):
         """2.5 -> 3, 2.4 -> 2, unlike modern round()."""
         return int(x + 0.5)
 
-    def get_random_factor(self) -> t.Union[float, int]:
-        if self.steps_to_finish == self.scale - 1:
-            value = random.getrandbits(10) / 2500
-        else:
-            value = random.getrandbits(10) / 3500
+    def get_roughness_factor(self) -> t.Union[float, int]:
+        denominator = self.rnd_denominator_base + self.rnd_denominator_step * (self.scale - self.steps_to_finish)
+        value = random.getrandbits(self.rnd_power) / denominator
+
         if not value:
             return 0
+
         return value if random.getrandbits(1) else -value
 
     def get_rand_height(self) -> int:
@@ -121,7 +120,7 @@ class SurfaceGenerator:
             self.surface[point_4[0]][point_4[1]] if point_4 is not None else 0,
         )) / (4 if point_4 else 3)
 
-        return self.round(avg + self.get_random_factor())
+        return self.round(avg + self.get_roughness_factor())
 
     @staticmethod
     def get_edge_size_by_coords(coords: SurfaceCoords) -> int:
@@ -278,7 +277,7 @@ class SurfaceGeneratorTest(SurfaceGenerator):
     def get_distanced_randoms_for_surface_corners(self) -> t.Tuple[int, int, int, int]:
         return 1, 3, 5, 7
 
-    def get_random_factor(self) -> int:
+    def get_roughness_factor(self) -> int:
         return 0
 
     def get_rand_height(self) -> int:
