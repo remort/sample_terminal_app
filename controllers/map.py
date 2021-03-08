@@ -16,6 +16,8 @@ class MapController(BaseController):
 
         self.calculate_initial_screen_position()
         self.unveiled_tile_char: str = '.'
+        self.vision = 6
+
         self.draw_surface()
 
     def _generate_map_from_surface(self) -> MapType:
@@ -60,55 +62,51 @@ class MapController(BaseController):
         actor_p = self.st.actor_location
         curr_h = self.st.curr_height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
 
-        vision_x = 6
-        vision_y = 6
+        max_vision_y = max_vision_x = self.vision
+        if actor_p.y < self.vision:
+            max_vision_y = actor_p.y
+        if actor_p.x < self.vision:
+            max_vision_x = actor_p.x
 
-        if actor_p.y < vision_y:
-            vision_y = actor_p.y
+        for dist in range(1, self.vision + 1):
+            min_dist_x = dist if dist <= max_vision_x else max_vision_x
+            min_dist_y = dist if dist <= max_vision_y else max_vision_y
 
-        if actor_p.x < vision_x:
-            vision_x = actor_p.x
+            for row in self.st.map[actor_p.y - min_dist_y:actor_p.y + dist + 1]:
+                for tile in row[actor_p.x - min_dist_x:actor_p.x + dist + 1]:
+                    x_offset = abs(tile.x - actor_p.x)
+                    y_offset = abs(tile.y - actor_p.y)
 
-        for row in self.st.map[actor_p.y - vision_y:actor_p.y + vision_y + 1]:
-            for tile in row[actor_p.x - vision_x:actor_p.x + vision_x + 1]:
-                x_offset = abs(tile.x - actor_p.x)
-                y_offset = abs(tile.y - actor_p.y)
-
-                # closest tiles
-                if x_offset <= 1 and y_offset <= 1:
-                    self.unveil_tile(tile)
-
-                # +2 tile actor surroundings
-                elif x_offset <= 2 and y_offset <= 2:
-                    self.unveil_tile(tile)
-
-                # +3 tile actor surroundings
-                elif x_offset <= 3 and y_offset <= 3:
-                    if tile.height == curr_h:
-                        self.unveil_tile(tile)
-                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
-                        self.unveil_tile(tile)
-                    if tile.height == curr_h + 1:
-                        self.unveil_tile(tile)
-
-                # +4 tile actor surroundings
-                elif x_offset <= 4 and y_offset <= 4:
-                    if tile.height == curr_h:
-                        if x_offset != y_offset:
+                    if x_offset == dist or y_offset == dist:
+                        if dist == 1:
                             self.unveil_tile(tile)
-                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
-                        self.unveil_tile(tile)
 
-                # +5 tile actor surroundings
-                elif x_offset <= 6 and y_offset <= 6:
-                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
-                        self.unveil_tile(tile)
-
-                # +6 tile actor surroundings
-                elif x_offset <= 6 and y_offset <= 6:
-                    if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
-                        if x_offset != y_offset:
+                        if dist == 2:
                             self.unveil_tile(tile)
+
+                        if dist == 3:
+                            if tile.height == curr_h:
+                                self.unveil_tile(tile)
+                            if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
+                                self.unveil_tile(tile)
+                            if tile.height == curr_h + 1:
+                                self.unveil_tile(tile)
+
+                        if dist == 4:
+                            if tile.height == curr_h:
+                                if x_offset != y_offset:
+                                    self.unveil_tile(tile)
+                            if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
+                                self.unveil_tile(tile)
+
+                        if dist == 5:
+                            if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
+                                self.unveil_tile(tile)
+
+                        if dist == 6:
+                            if tile.height < curr_h and self.is_prev_tile_unveiled(actor_p, tile):
+                                if x_offset != y_offset:
+                                    self.unveil_tile(tile)
 
     def process_event(self, key: int) -> None:
         if key in self.st.move_keys:

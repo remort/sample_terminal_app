@@ -23,6 +23,7 @@ class AnimationRunner:
         self._step_times: t.Dict[int, float] = self._st.heights_to_wait_time_map
         self._time_to_wait: float = 0.0
         self._move_keys_buff = deque()
+        self._move_keys_buff_len = 5
 
     def set_next_keyboard_interrupt_wait_time(self) -> float:
         if self._st.debug:
@@ -38,7 +39,7 @@ class AnimationRunner:
                 break
 
             if key in self._st.move_keys:
-                if len(self._move_keys_buff) <= 10:
+                if len(self._move_keys_buff) <= self._move_keys_buff_len:
                     self._move_keys_buff.append(key)
 
             if self._time_to_wait <= 0:
