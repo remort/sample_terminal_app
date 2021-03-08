@@ -16,6 +16,7 @@ class MapController(BaseController):
 
         self.calculate_initial_screen_position()
         self.unveiled_tile_char: str = '.'
+        self.need_to_unveil = True
         self.vision = 6
 
         self.draw_surface()
@@ -56,7 +57,7 @@ class MapController(BaseController):
         return not self.st.map[prev_tile_coords.y][prev_tile_coords.x].is_veiled
 
     def unveil_map(self) -> None:
-        if self.st.debug:
+        if self.st.debug or not self.need_to_unveil:
             return
 
         actor_p = self.st.actor_location
@@ -108,6 +109,8 @@ class MapController(BaseController):
                                 if x_offset != y_offset:
                                     self.unveil_tile(tile)
 
+        self.need_to_unveil = False
+
     def process_event(self, key: int) -> None:
         if key in self.st.move_keys:
             if key == self.st.key_up:
@@ -118,6 +121,8 @@ class MapController(BaseController):
                 self.scroll_h(1)
             if key == self.st.key_left:
                 self.scroll_h(-1)
+
+            self.need_to_unveil = True
 
     def calculate_initial_screen_position(self) -> None:
         if self.st.scene_size.w > self.st.map_size or self.st.scene_size.h > self.st.map_size:
