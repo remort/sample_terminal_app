@@ -26,6 +26,8 @@ COLOR_MAP_H7: int = 106
 COLOR_MAP_H8: int = 107
 COLOR_MAP_H9: int = 108
 
+A_BOLD = curses.A_BOLD
+
 
 def init_color_pairs() -> None:
     curses.init_pair(COLOR_DEFAULT, curses.COLOR_RED, curses.COLOR_BLACK)

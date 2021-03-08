@@ -1,6 +1,4 @@
-import curses
-
-from colors import COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
+from colors import A_BOLD, COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
 from controllers.base import BaseController
 from storage import RuntimeStorage
 
@@ -10,7 +8,7 @@ class StatusBarController(BaseController):
         super().__init__(pad, storage)
 
         self.status_bar_width: int = screen_width
-        self._pad.pad.bkgd(' ', curses.color_pair(COLOR_STATUS_BAR_STATS))
+        self._pad.bkgd(' ', COLOR_STATUS_BAR_STATS)
         self.do_animation()
 
     def print_status(self) -> None:
@@ -47,9 +45,9 @@ class StatusBarController(BaseController):
 
         message_line_start = self.status_bar_width - len(message_line)
 
-        self._pad.print(actor_location, attr=curses.A_BOLD, cp=COLOR_STATUS_BAR_STATS)
+        self._pad.print(actor_location, attr=A_BOLD, cp=COLOR_STATUS_BAR_STATS)
         self._pad.print(status_line, 0, len(actor_location), cp=COLOR_STATUS_BAR_STATS)
-        self._pad.print(message_line, 0, message_line_start, attr=curses.A_BOLD, cp=COLOR_STATUS_BAR_MESSAGES)
+        self._pad.print(message_line, 0, message_line_start, attr=A_BOLD, cp=COLOR_STATUS_BAR_MESSAGES)
 
     def process_event(self, key: int) -> None:
         pass
@@ -57,6 +55,8 @@ class StatusBarController(BaseController):
     def do_animation(self) -> None:
         self._pad.erase()
         self.print_status()
+
+    def refresh(self) -> None:
         self._pad.noutrefresh(
             0, 0,
             self.st.scene_coords.br.y + 1, 0,

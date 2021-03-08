@@ -1,4 +1,5 @@
 import typing as t
+from curses import KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_UP
 
 from colors import (
     COLOR_MAP_H1,
@@ -59,6 +60,11 @@ class RuntimeStorage:
         self.screen_is_most_left: bool = False
 
         self.messages: t.List[str] = []
+        self.move_keys = (KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT)
+        self.key_up = KEY_UP
+        self.key_down = KEY_DOWN
+        self.key_left = KEY_LEFT
+        self.key_right = KEY_RIGHT
 
         self.heights_to_colors_map: t.Dict[int, t.Tuple[str, int]] = {
             0: ('0', COLOR_MAP_H1),

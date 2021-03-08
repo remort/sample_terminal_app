@@ -32,11 +32,24 @@ class Pad:
     def getch(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         return self._pad.getch(*args, **kwargs)
 
-    def addch(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        self._pad.addch(*args, **kwargs)
+    def addch(
+            self,
+            char: str,
+            y: int = 0,
+            x: int = 0,
+            attr: int = curses.A_NORMAL,
+            cp: t.Optional[int] = COLOR_DEFAULT,
+    ) -> t.Any:
+        self._pad.addch(y, x, char, curses.color_pair(cp) | attr)
 
     def erase(self) -> t.Any:
         self._pad.erase()
 
     def noutrefresh(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         self._pad.noutrefresh(*args, **kwargs)
+
+    def refresh(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+        self._pad.noutrefresh(*args, **kwargs)
+
+    def bkgd(self, ch: str, cp: int, attr: int = curses.A_NORMAL):
+        self._pad.bkgdset(ch, curses.color_pair(cp) | attr)

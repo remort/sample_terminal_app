@@ -12,3 +12,6 @@ class BaseController:
 
     def do_animation(self) -> None:
         pass
+
+    def refresh(self) -> None:
+        pass

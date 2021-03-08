@@ -1,6 +1,4 @@
-import curses
-
-from colors import COLOR_ACTOR
+from colors import A_BOLD, COLOR_ACTOR
 from controllers.base import BaseController
 from dto import Point, Size
 from storage import RuntimeStorage
@@ -26,14 +24,14 @@ class ActorControler(BaseController):
         )
 
     def process_event(self, key: int) -> None:
-        if key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_LEFT):
-            if key == curses.KEY_UP:
+        if key in self.st.move_keys:
+            if key == self.st.key_up:
                 self.move_v(1)
-            if key == curses.KEY_DOWN:
+            if key == self.st.key_down:
                 self.move_v(-1)
-            if key == curses.KEY_RIGHT:
+            if key == self.st.key_right:
                 self.move_h(1)
-            if key == curses.KEY_LEFT:
+            if key == self.st.key_left:
                 self.move_h(-1)
 
             self.draw_actor()
@@ -81,8 +79,7 @@ class ActorControler(BaseController):
 
     def draw_actor(self) -> None:
         self.update_actor_location()
-        self._pad.print('Ѫ', cp=COLOR_ACTOR, attr=curses.A_BOLD)
-        self.refresh()
+        self._pad.print('Ѫ', cp=COLOR_ACTOR, attr=A_BOLD)
 
     def get_actor_on_screen_coords(self) -> Point:
         screen_center = self.get_screen_center()

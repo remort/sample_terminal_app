@@ -1,5 +1,3 @@
-import curses
-
 from controllers.base import BaseController
 from dto import Coordinates, Point, Size, Tile
 from storage import RuntimeStorage, MapType
@@ -39,7 +37,7 @@ class MapController(BaseController):
 
     def unveil_tile(self, tile: Tile) -> None:
         tile.is_veiled = False
-        self._pad.print(tile.ch, tile.y, tile.x, cp=tile.color)
+        self._pad.addch(tile.ch, tile.y, tile.x, cp=tile.color)
 
     def is_prev_tile_unveiled(self, ap: Point, tile: Tile) -> bool:
         prev_tile_coords = Point(x=tile.x, y=tile.y)
@@ -113,17 +111,15 @@ class MapController(BaseController):
                             self.unveil_tile(tile)
 
     def process_event(self, key: int) -> None:
-        if key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_RIGHT, curses.KEY_LEFT):
-            if key == curses.KEY_UP:
+        if key in self.st.move_keys:
+            if key == self.st.key_up:
                 self.scroll_v(1)
-            if key == curses.KEY_DOWN:
+            if key == self.st.key_down:
                 self.scroll_v(-1)
-            if key == curses.KEY_RIGHT:
+            if key == self.st.key_right:
                 self.scroll_h(1)
-            if key == curses.KEY_LEFT:
+            if key == self.st.key_left:
                 self.scroll_h(-1)
-
-            self.refresh()
 
     def calculate_initial_screen_position(self) -> None:
         if self.st.scene_size.w > self.st.map_size or self.st.scene_size.h > self.st.map_size:
@@ -209,4 +205,3 @@ class MapController(BaseController):
 
     def do_animation(self) -> None:
         self.unveil_map()
-        self.refresh()
