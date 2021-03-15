@@ -1,22 +1,20 @@
 from colors import A_BOLD, COLOR_ACTOR
 from controllers.base import BaseController
-from dto import Point, Size
+from dto import Point
 from storage import RuntimeStorage
 from tools import Pad
 
 
-class ActorControler(BaseController):
+class ActorController(BaseController):
     def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
         super().__init__(pad, storage)
-
-        self.st.actor_screen_center_offset = Size(w=0, h=0)
         self.draw_actor()
 
     def get_screen_center(self) -> Point:
-        rx = self.st.scene_on_map_coords.tr.x
-        lx = self.st.scene_on_map_coords.tl.x
-        ty = self.st.scene_on_map_coords.tl.y
-        by = self.st.scene_on_map_coords.bl.y
+        rx = self.st.scene_pad_coords.tr.x
+        lx = self.st.scene_pad_coords.tl.x
+        ty = self.st.scene_pad_coords.tl.y
+        by = self.st.scene_pad_coords.bl.y
 
         return Point(
             x=(rx - lx) // 2 + (rx - lx) % 2,
@@ -51,7 +49,7 @@ class ActorControler(BaseController):
 
         elif self.st.screen_is_most_bottom:
             if step < 0:
-                if self.st.actor_screen_center_offset.h - (self.st.scene_coords.br.y - screen_center.y) < 0:
+                if self.st.actor_screen_center_offset.h - (self.st.scene_pad_coords.br.y - screen_center.y) < 0:
                     self.st.actor_screen_center_offset.h += 1
             else:
                 if self.st.actor_screen_center_offset.h > 0:
@@ -64,12 +62,12 @@ class ActorControler(BaseController):
         screen_center = self.get_screen_center()
         if self.st.screen_is_most_right:
             if step > 0:
-                if self.st.actor_screen_center_offset.w - (self.st.scene_coords.br.x - screen_center.x) < 0:
+                if self.st.actor_screen_center_offset.w - (self.st.scene_pad_coords.tr.x - screen_center.x) < 0:
                     self.st.actor_screen_center_offset.w += 1
             else:
                 if self.st.actor_screen_center_offset.w > 0:
                     self.st.actor_screen_center_offset.w -= 1
-        elif self.st.screen_is_most_left:
+        if self.st.screen_is_most_left:
             if step < 0:
                 if self.st.actor_screen_center_offset.w + screen_center.x > 0:
                     self.st.actor_screen_center_offset.w -= 1
@@ -79,7 +77,7 @@ class ActorControler(BaseController):
 
     def draw_actor(self) -> None:
         self.update_actor_location()
-        self._pad.print('Ѫ', cp=COLOR_ACTOR, attr=A_BOLD)
+        self._pad.print('+', cp=COLOR_ACTOR, attr=A_BOLD)
 
     def get_actor_on_screen_coords(self) -> Point:
         screen_center = self.get_screen_center()

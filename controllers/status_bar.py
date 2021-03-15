@@ -4,16 +4,16 @@ from storage import RuntimeStorage
 
 
 class StatusBarController(BaseController):
-    def __init__(self, pad, storage: RuntimeStorage, screen_width: int) -> None:
+    def __init__(self, pad, storage: RuntimeStorage) -> None:
         super().__init__(pad, storage)
 
-        self.status_bar_width: int = screen_width
+        self.status_bar_width: int = self.st.status_bar_width
         self._pad.bkgd(' ', COLOR_STATUS_BAR_STATS)
         self.do_animation()
 
     def print_status(self) -> None:
-        scene_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
         map_size = f'{self.st.map_size}x{self.st.map_size}'
+        scene_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
 
         actor_location = f'{self.st.actor_location.y}x{self.st.actor_location.x} '
 
@@ -22,11 +22,11 @@ class StatusBarController(BaseController):
         border_bump = ''
         if self.st.screen_is_most_top and self.st.actor_location.y == 0:
             border_bump = 'Top border reached.'
-        if self.st.screen_is_most_bottom and self.st.actor_location.y == self.st.map_coords.br.y:
+        if self.st.screen_is_most_bottom and self.st.actor_location.y == self.st.map_pad_coords.br.y:
             border_bump = 'Bottom border reached.'
         if self.st.screen_is_most_left and self.st.actor_location.x == 0:
             border_bump = 'Left border reached.'
-        if self.st.screen_is_most_right and self.st.actor_location.x == self.st.map_coords.br.x:
+        if self.st.screen_is_most_right and self.st.actor_location.x == self.st.map_pad_coords.br.x:
             border_bump = 'Right border reached.'
 
         last_message = ''
@@ -53,12 +53,14 @@ class StatusBarController(BaseController):
         pass
 
     def do_animation(self) -> None:
-        self._pad.erase()
+        self._pad.pad.erase()
         self.print_status()
+        # Resolves curses' "typing the last character of the last line" problem.
+        self._pad.pad.move(0, 0)
 
     def refresh(self) -> None:
         self._pad.noutrefresh(
             0, 0,
-            self.st.scene_coords.br.y + 1, 0,
-            self.st.scene_coords.br.y + 1, self.st.scene_coords.br.x,
+            self.st.scene_pad_coords.br.y + 1, 0,
+            self.st.scene_pad_coords.br.y + 1, self.st.scene_pad_coords.br.x,
         )

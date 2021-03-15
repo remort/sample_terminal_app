@@ -19,13 +19,14 @@ MapType = t.List[t.List[Tile]]
 
 class RuntimeStorage:
     def __init__(self):
-
         # A power of two which defines map size.
         self.map_scale: t.Optional[int] = None
         # Size computed from scale.
         self.map_size: t.Optional[int] = None
-        # Overall map coords starting from 0,0 point. scene_on_map_coords counts according this.
-        self.map_coords: t.Optional[Coordinates] = None
+
+        self.map_pad_h: int = 0
+        self.map_pad_w: int = 0
+        self.map_pad_coords: t.Optional[Coordinates] = None
 
         # 2-dim. array of random generated heights. Maps to self.map later.
         self.surface: t.List[t.List[int]] = []
@@ -33,16 +34,17 @@ class RuntimeStorage:
         self.map: t.Optional[MapType] = None
         # Status bar ncurses pad height.
         self.bar_height: int = 1
+        self.status_bar_width: int = 0
 
         # Height and Width of main scene ncurses pad.
         self.scene_size: t.Optional[Size] = None
         # Main scene ncurses pad coordinates starting from 0,0 point. Actor position computes inside this coords.
-        self.scene_coords: t.Optional[Coordinates] = None
+        self.scene_pad_coords: t.Optional[Coordinates] = None
         # Current main scene ncurses pad position in larger map coordinates.
         self.scene_on_map_coords: t.Optional[Coordinates] = None
 
         # Point stores Actor point offset
-        self.actor_screen_center_offset: t.Optional[Size] = None
+        self.actor_screen_center_offset: Size = Size(w=0, h=0)
 
         # Actor point location on map coordinates.
         self.actor_location: t.Optional[Point] = None

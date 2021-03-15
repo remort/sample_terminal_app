@@ -21,13 +21,9 @@ class Pad:
             y: int = 0,
             x: int = 0,
             attr: int = curses.A_NORMAL,
-            n: t.Optional[int] = None,
             cp: t.Optional[int] = COLOR_DEFAULT,
     ) -> None:
-        if not n:
-            self._pad.addstr(y, x, string, curses.color_pair(cp) | attr)
-        else:
-            self._pad.addnstr(y, x, string, n, curses.color_pair(cp) | attr)
+        self._pad.insstr(y, x, string, curses.color_pair(cp) | attr)
 
     def getch(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         return self._pad.getch(*args, **kwargs)
@@ -41,9 +37,6 @@ class Pad:
             cp: t.Optional[int] = COLOR_DEFAULT,
     ) -> t.Any:
         self._pad.addch(y, x, char, curses.color_pair(cp) | attr)
-
-    def erase(self) -> t.Any:
-        self._pad.erase()
 
     def noutrefresh(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         self._pad.noutrefresh(*args, **kwargs)
