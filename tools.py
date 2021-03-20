@@ -10,6 +10,7 @@ class Pad:
         pad.keypad(True)
         pad.nodelay(True)
         self._pad: t.Any = pad
+        self.height, self.width = self._pad.getmaxyx()
 
     @property
     def pad(self) -> t.Any:
@@ -22,8 +23,16 @@ class Pad:
             x: int = 0,
             attr: int = curses.A_NORMAL,
             cp: t.Optional[int] = COLOR_DEFAULT,
+            sq: bool = False,
     ) -> None:
-        self._pad.insstr(y, x, string, curses.color_pair(cp) | attr)
+        attrs = curses.color_pair(cp) | attr
+        if sq:
+            x1 = x * 2
+            x2 = x1 + 1
+            self._pad.insstr(y, x1, string, attrs)
+            self._pad.insstr(y, x2, string, attrs)
+        else:
+            self._pad.insstr(y, x, string, attrs)
 
     def getch(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         return self._pad.getch(*args, **kwargs)
@@ -35,8 +44,16 @@ class Pad:
             x: int = 0,
             attr: int = curses.A_NORMAL,
             cp: t.Optional[int] = COLOR_DEFAULT,
+            sq: bool = False,
     ) -> t.Any:
-        self._pad.addch(y, x, char, curses.color_pair(cp) | attr)
+        attrs = curses.color_pair(cp) | attr
+        if sq:
+            x1 = x * 2
+            x2 = x1 + 1
+            self._pad.addch(y, x1, char, attrs)
+            self._pad.addch(y, x2, char, attrs)
+        else:
+            self._pad.addch(y, x, char, attrs)
 
     def noutrefresh(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         self._pad.noutrefresh(*args, **kwargs)

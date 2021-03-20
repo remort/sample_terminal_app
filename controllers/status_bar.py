@@ -15,18 +15,19 @@ class StatusBarController(BaseController):
         map_size = f'{self.st.map_size}x{self.st.map_size}'
         scene_size = f'{self.st.scene_size.h}x{self.st.scene_size.w}'
 
-        actor_location = f'{self.st.actor_location.y}x{self.st.actor_location.x} '
+        actor_x_location = self.st.actor_location.x // (2 if self.st.square_tiles else 1)
 
-        height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
+        actor_location = f'{self.st.actor_location.y}x{actor_x_location} '
+        height = self.st.map[self.st.actor_location.y][actor_x_location].height
 
         border_bump = ''
         if self.st.screen_is_most_top and self.st.actor_location.y == 0:
             border_bump = 'Top border reached.'
-        if self.st.screen_is_most_bottom and self.st.actor_location.y == self.st.map_pad_coords.br.y:
+        if self.st.screen_is_most_bottom and self.st.actor_location.y == self.st.map_size - 1:
             border_bump = 'Bottom border reached.'
         if self.st.screen_is_most_left and self.st.actor_location.x == 0:
             border_bump = 'Left border reached.'
-        if self.st.screen_is_most_right and self.st.actor_location.x == self.st.map_pad_coords.br.x:
+        if self.st.screen_is_most_right and actor_x_location == self.st.map_size - 1:
             border_bump = 'Right border reached.'
 
         last_message = ''

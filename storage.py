@@ -61,6 +61,18 @@ class RuntimeStorage:
         self.screen_is_most_right: bool = False
         self.screen_is_most_left: bool = False
 
+        # Map tile is drawn as 2 terminal symbols horizontally: XX, instead of standard one symbol per tile: X.
+        self.square_tiles: bool = False
+
+        # For square tiles mode only when horizontal move takes two symbols.
+        # When screen in odd, we move left, reach map border: move screen half step,
+        # then start moving actor on screen on the rest half of the step.
+        self.short_scroll: bool = False
+
+        # Move key pressed, screen edge is even, border just reached - do not move actor second time on screen.
+        # If map border is reached and we move but map doesn't move anymore - move actor on screen then.
+        self.scene_moved: bool = False
+
         self.messages: t.List[str] = []
         self.move_keys = (KEY_UP, KEY_DOWN, KEY_RIGHT, KEY_LEFT)
         self.key_up = KEY_UP

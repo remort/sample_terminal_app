@@ -28,15 +28,23 @@ def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
         '--debug', action='store_true',
         help='Run in debug mode. This unveils map on start, runs no map discover on every move, moves faster.',
     )
+    parser.add_argument(
+        '--square-tiles', action='store_true',
+        help='Map tile is being drawn as two terminal symbols. Horizontal movements jump over two tiles a time.',
+    )
+
     args = parser.parse_args()
     if args.debug:
         storage.debug = True
+
+    if args.square_tiles:
+        storage.square_tiles = True
 
     storage.map_scale = get_map_scale_by_screen_size(screen_height, screen_width)
     storage.map_size = get_map_size_by_scale(storage.map_scale)
 
     storage.map_pad_h = storage.map_size
-    storage.map_pad_w = storage.map_size
+    storage.map_pad_w = (storage.map_size * 2) if storage.square_tiles else storage.map_size
 
     storage.map_pad_coords = make_map_coordinates_by_pad_dimensions(storage.map_pad_h, storage.map_pad_w)
 
@@ -61,7 +69,7 @@ def main(stdscr: curses.window) -> None:
 
     kb_pad = Pad(1, 1)
     map_pad = Pad(storage.map_pad_h, storage.map_pad_w)
-    actor_pad = Pad(1, 1)
+    actor_pad = Pad(1, 1 + (1 if storage.square_tiles else 0))
     status_bar_pad = Pad(1, storage.status_bar_width)
 
     map = MapController(map_pad, storage)
