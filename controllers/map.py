@@ -12,7 +12,7 @@ class MapController(BaseController):
     def __init__(self, pad, storage: RuntimeStorage) -> None:
         super().__init__(pad, storage)
 
-        self.calculate_initial_screen_position()
+        self.calculate_initial_scene_position()
         self.veiled_tile_char: str = '.'
         self.need_to_unveil = True
         self.vision = 8
@@ -25,7 +25,7 @@ class MapController(BaseController):
 
         return self.st.map[line][col]
 
-    def calculate_initial_screen_position(self) -> None:
+    def calculate_initial_scene_position(self) -> None:
         map_edge = self.st.map_size
         horizontal_map_size = self.st.map_size * 2 if self.st.square_tiles else self.st.map_size
 
@@ -157,15 +157,15 @@ class MapController(BaseController):
 
     def scroll_v(self, step: int) -> None:
         self.st.scene_moved = False
-        if self.st.screen_is_most_top:
+        if self.st.scene_is_most_top:
             if step > 0:
                 return
 
-        if self.st.screen_is_most_bottom:
+        if self.st.scene_is_most_bottom:
             if step < 0:
                 return
 
-        if self.st.actor_screen_center_offset.h != 0:
+        if self.st.actor_scene_center_offset.h != 0:
             return
 
         self.st.scene_on_map_coords.tl.y -= step
@@ -174,14 +174,14 @@ class MapController(BaseController):
         self.st.scene_on_map_coords.bl.y -= step
 
         if self.st.scene_on_map_coords.tl.y <= 0:
-            self.st.screen_is_most_top = True
+            self.st.scene_is_most_top = True
         else:
-            self.st.screen_is_most_top = False
+            self.st.scene_is_most_top = False
 
         if self.st.scene_on_map_coords.br.y >= self.st.map_size:
-            self.st.screen_is_most_bottom = True
+            self.st.scene_is_most_bottom = True
         else:
-            self.st.screen_is_most_bottom = False
+            self.st.scene_is_most_bottom = False
 
         self.st.scene_moved = True
 
@@ -190,39 +190,51 @@ class MapController(BaseController):
         self.st.short_scroll = False
         horizontal_map_size = self.st.map_size * 2 if self.st.square_tiles else self.st.map_size
 
-        if self.st.screen_is_most_right:
+        if self.st.scene_is_most_right:
             if step > 0:
                 return
 
-        if self.st.screen_is_most_left:
+        if self.st.scene_is_most_left:
             if step < 0:
                 return
 
         if self.st.square_tiles:
             self.st.short_scroll = False
 
-            # We start moving screen from left border to the right by half step if actor screen offset is -1.
-            # There is no symmetric point of return from right border stick to screen moving mode,
-            # because if screen size is not even, odd part of the map is always lays by the left side of the screen.
-            # i.e short screen move caused by oddity of screen size is always happens when move to the left (and back).
-            if self.st.actor_screen_center_offset.w == -1:
+            # Scene is about to leave right/left border.
+            # If actor scene X offset is -1 or 1 and increasing/decreasing: Short scene scroll should be made.
+            # Author move on scene will complete the second half of the step and X offset will become 0.
+            # So here we decide that one step of two symbols divides between scene and author, one symbol for each.
+
+            # FOR TESTS: appears on for example scene widths: 57, 61
+            # First scroll of scene from left border to map center caught, make it short.
+            if self.st.actor_scene_center_offset.w == -1:
                 if step > 0:
                     step -= 1
                 self.st.short_scroll = True
-            elif self.st.actor_screen_center_offset.w != 0:
+
+            # FOR TESTS: appears on for example scene widths: 59, 63
+            # First scroll of scene from right border to map center caught, make it short.
+            elif self.st.actor_scene_center_offset.w == 1:
+                if step < 0:
+                    step += 1
+                self.st.short_scroll = True
+
+            elif self.st.actor_scene_center_offset.w != 0:
                 return
 
-            # if screen step over right border - decrease step to fit to the border
+            # Scene is about to overstep right/left border: make a short step.
+            # Scene steps over right border - decrease step to fit to the border.
             if self.st.scene_on_map_coords.tr.x + step > horizontal_map_size and step > 0:
                 step -= 1
                 self.st.short_scroll = True
 
-            # if screen steps over left border - increase step to fit to the border
+            # Scene steps over left border - increase step to fit to the border.
             if self.st.scene_on_map_coords.tl.x + step < 0:
                 step += 1
                 self.st.short_scroll = True
         else:
-            if self.st.actor_screen_center_offset.w != 0:
+            if self.st.actor_scene_center_offset.w != 0:
                 return
 
         self.st.scene_on_map_coords.tl.x += step
@@ -231,16 +243,16 @@ class MapController(BaseController):
         self.st.scene_on_map_coords.bl.x += step
 
         if self.st.scene_on_map_coords.tr.x >= horizontal_map_size:
-            self.st.screen_is_most_right = True
+            self.st.scene_is_most_right = True
             self.st.scene_moved = True
         else:
-            self.st.screen_is_most_right = False
+            self.st.scene_is_most_right = False
 
         if self.st.scene_on_map_coords.tl.x <= 0:
-            self.st.screen_is_most_left = True
+            self.st.scene_is_most_left = True
             self.st.scene_moved = True
         else:
-            self.st.screen_is_most_left = False
+            self.st.scene_is_most_left = False
 
     def draw_surface(self) -> None:
         if self.st.debug:

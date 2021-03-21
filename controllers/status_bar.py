@@ -19,13 +19,13 @@ class StatusBarController(BaseController):
         height = self.st.map[self.st.actor_on_map_pos.y][self.st.actor_on_map_pos.x].height
 
         border_bump = ''
-        if self.st.screen_is_most_top and self.st.actor_on_map_pos.y == 0:
+        if self.st.scene_is_most_top and self.st.actor_on_map_pos.y == 0:
             border_bump = 'Top border reached.'
-        if self.st.screen_is_most_bottom and self.st.actor_on_map_pos.y == self.st.map_size - 1:
+        if self.st.scene_is_most_bottom and self.st.actor_on_map_pos.y == self.st.map_size - 1:
             border_bump = 'Bottom border reached.'
-        if self.st.screen_is_most_left and self.st.actor_on_map_pos.x == 0:
+        if self.st.scene_is_most_left and self.st.actor_on_map_pos.x == 0:
             border_bump = 'Left border reached.'
-        if self.st.screen_is_most_right and self.st.actor_on_map_pos.x == self.st.map_size - 1:
+        if self.st.scene_is_most_right and self.st.actor_on_map_pos.x == self.st.map_size - 1:
             border_bump = 'Right border reached.'
 
         last_message = ''

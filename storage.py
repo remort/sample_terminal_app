@@ -44,7 +44,7 @@ class RuntimeStorage:
         self.scene_on_map_coords: t.Optional[Coordinates] = None
 
         # Point stores Actor point offset
-        self.actor_screen_center_offset: Size = Size(w=0, h=0)
+        self.actor_scene_center_offset: Size = Size(w=0, h=0)
 
         # Actor point location on map coordinates.
         self.actor_on_map_pos: t.Optional[Point] = None
@@ -56,10 +56,10 @@ class RuntimeStorage:
         self.debug: bool = False
 
         # Flags designates if actor reached the border of the map.
-        self.screen_is_most_top: bool = False
-        self.screen_is_most_bottom: bool = False
-        self.screen_is_most_right: bool = False
-        self.screen_is_most_left: bool = False
+        self.scene_is_most_top: bool = False
+        self.scene_is_most_bottom: bool = False
+        self.scene_is_most_right: bool = False
+        self.scene_is_most_left: bool = False
 
         # Map tile is drawn as 2 terminal symbols horizontally: XX, instead of standard one symbol per tile: X.
         self.square_tiles: bool = False

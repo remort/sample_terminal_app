@@ -89,9 +89,9 @@ def main(stdscr: curses.window) -> None:
     actor = ActorController(actor_pad, storage)
     status_bar = StatusBarController(status_bar_pad, storage)
 
-    scenes = [map, actor, status_bar]
+    pad_controllers = [map, actor, status_bar]
 
-    runner = AnimationRunner(kb_pad, scenes, storage)
+    runner = AnimationRunner(kb_pad, pad_controllers, storage)
     runner.run()
 
 
