@@ -47,7 +47,7 @@ class RuntimeStorage:
         self.actor_screen_center_offset: Size = Size(w=0, h=0)
 
         # Actor point location on map coordinates.
-        self.actor_location: t.Optional[Point] = None
+        self.actor_on_map_pos: t.Optional[Point] = None
 
         # Current tile height.
         self.curr_height: t.Optional[int] = None

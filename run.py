@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import curses
+import logging
 from curses import wrapper
 
 from colors import init_color_pairs
@@ -19,8 +20,19 @@ from utils import (
     make_map_coordinates_by_pad_dimensions,
 )
 
+logging.basicConfig(
+    filename='application.log',
+    filemode='a',
+    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+    datefmt='%H:%M:%S',
+    level=logging.DEBUG,
+)
+
+log = logging.getLogger(__name__)
+
 
 def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
+    log.debug('Program configuring.')
     storage = RuntimeStorage()
 
     parser = argparse.ArgumentParser()
@@ -60,6 +72,7 @@ def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
 
 
 def main(stdscr: curses.window) -> None:
+    log.debug('Program starting.')
     curses.curs_set(0)
     init_color_pairs()
 

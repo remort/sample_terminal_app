@@ -1,7 +1,11 @@
+import logging
+
 from colors import COLOR_UNVEILED_MAP
 from controllers.base import BaseController
 from dto import Coordinates, Point, Tile
 from storage import RuntimeStorage
+
+log = logging.getLogger(__name__)
 
 
 class MapController(BaseController):
@@ -14,6 +18,12 @@ class MapController(BaseController):
         self.vision = 8
 
         self.draw_surface()
+
+    def _get_tile(self, line: int, col: int) -> Tile:
+        if self.st.square_tiles:
+            col = col // 2
+
+        return self.st.map[line][col]
 
     def calculate_initial_screen_position(self) -> None:
         map_edge = self.st.map_size
@@ -30,21 +40,21 @@ class MapController(BaseController):
 
     def unveil_tile(self, tile: Tile) -> None:
         tile.is_veiled = False
-        self._pad.addch(tile.ch, tile.y, tile.x, cp=tile.color)
+        self._pad.addch(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
 
     def get_previous_tile(self, ap: Point, tile: Tile) -> Tile:
         prev_tile_coords = Point(x=tile.x, y=tile.y)
 
         if tile.x > ap.x:
-            prev_tile_coords.x -= 1
+            prev_tile_coords.x -= 2 if self.st.square_tiles else 1
         if tile.x < ap.x:
-            prev_tile_coords.x += 1
+            prev_tile_coords.x += 2 if self.st.square_tiles else 1
         if tile.y > ap.y:
             prev_tile_coords.y -= 1
         if tile.y < ap.y:
             prev_tile_coords.y += 1
 
-        return self.st.map[prev_tile_coords.y][prev_tile_coords.x]
+        return self._get_tile(prev_tile_coords.y, prev_tile_coords.x)
 
     def is_prev_tile_unveiled(self, ap: Point, tile: Tile) -> bool:
         prev_tile = self.get_previous_tile(ap, tile)
@@ -66,8 +76,11 @@ class MapController(BaseController):
         if self.st.debug or not self.need_to_unveil:
             return
 
-        actor_p = self.st.actor_location
-        actor_h = self.st.curr_height = self.st.map[self.st.actor_location.y][self.st.actor_location.x].height
+        actor_p = self.st.actor_on_map_pos
+        actor_tile = self.st.curr_height = self.st.map[self.st.actor_on_map_pos.y][self.st.actor_on_map_pos.x]
+        actor_h = actor_tile.height
+        if actor_tile.is_veiled:
+            self.unveil_tile(actor_tile)
 
         max_vision_y = max_vision_x = self.vision
         if actor_p.y < self.vision:

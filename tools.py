@@ -1,7 +1,10 @@
 import curses
+import logging
 import typing as t
 
 from colors import COLOR_DEFAULT
+
+log = logging.getLogger(__name__)
 
 
 class Pad:
@@ -47,13 +50,20 @@ class Pad:
             sq: bool = False,
     ) -> t.Any:
         attrs = curses.color_pair(cp) | attr
-        if sq:
-            x1 = x * 2
-            x2 = x1 + 1
-            self._pad.addch(y, x1, char, attrs)
-            self._pad.addch(y, x2, char, attrs)
-        else:
-            self._pad.addch(y, x, char, attrs)
+        try:
+            if sq:
+                x = x * 2
+                self._pad.addch(y, x, char, attrs)
+                self._pad.addch(y, x + 1, char, attrs)
+            else:
+                self._pad.addch(y, x, char, attrs)
+        except curses.error as error:
+            log.warning('Error adding character: "%s".', error)
+            log.warning('Line, col: %s, %s, Pad: H %s, W %s', y, x, self.height, self.width)
+            if (y + 1, x + 2 if sq else 1) == (self.height, self.width):
+                log.info('Ignore curses failure on carriage return on last line.')
+                return
+            raise error
 
     def noutrefresh(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         self._pad.noutrefresh(*args, **kwargs)

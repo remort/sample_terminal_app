@@ -106,11 +106,16 @@ class ActorController(BaseController):
 
     def update_actor_location(self) -> None:
         actor_on_screen_coords = self.get_actor_on_screen_coords()
+
+        actor_location_x = actor_on_screen_coords.x + self.st.scene_on_map_coords.tl.x
+        if self.st.square_tiles:
+            actor_location_x = actor_location_x // 2
+
         actor_on_map_coords = Point(
-            x=actor_on_screen_coords.x + self.st.scene_on_map_coords.tl.x,
+            x=actor_location_x,
             y=actor_on_screen_coords.y + self.st.scene_on_map_coords.tl.y,
         )
-        self.st.actor_location = actor_on_map_coords
+        self.st.actor_on_map_pos = actor_on_map_coords
 
     def refresh(self) -> None:
         actor_on_screen = self.get_actor_on_screen_coords()

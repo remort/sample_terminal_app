@@ -28,7 +28,7 @@ class AnimationRunner:
     def set_next_keyboard_interrupt_wait_time(self) -> float:
         if self._st.debug:
             return 0
-        tile = self._st.map[self._st.actor_location.y][self._st.actor_location.x]
+        tile = self._st.map[self._st.actor_on_map_pos.y][self._st.actor_on_map_pos.x]
         self._time_to_wait = self._step_times[tile.height]
 
     def run(self) -> None:
