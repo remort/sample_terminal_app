@@ -1,14 +1,15 @@
 from colors import A_BOLD, COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
 from controllers.base import BaseController
+from pad_wrapper import Pad
 from storage import RuntimeStorage
 
 
 class StatusBarController(BaseController):
-    def __init__(self, pad, storage: RuntimeStorage) -> None:
+    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
         super().__init__(pad, storage)
 
         self.status_bar_width: int = self.st.status_bar_width
-        self._pad.bkgd(' ', COLOR_STATUS_BAR_STATS)
+        self.pad.bkgd(' ', COLOR_STATUS_BAR_STATS)
         self.do_animation()
 
     def print_status(self) -> None:
@@ -44,21 +45,21 @@ class StatusBarController(BaseController):
 
         message_line_start = self.status_bar_width - len(message_line)
 
-        self._pad.print(actor_location, attr=A_BOLD, cp=COLOR_STATUS_BAR_STATS)
-        self._pad.print(status_line, 0, len(actor_location), cp=COLOR_STATUS_BAR_STATS)
-        self._pad.print(message_line, 0, message_line_start, attr=A_BOLD, cp=COLOR_STATUS_BAR_MESSAGES)
+        self.pad.print(actor_location, attr=A_BOLD, cp=COLOR_STATUS_BAR_STATS)
+        self.pad.print(status_line, 0, len(actor_location), cp=COLOR_STATUS_BAR_STATS)
+        self.pad.print(message_line, 0, message_line_start, attr=A_BOLD, cp=COLOR_STATUS_BAR_MESSAGES)
 
     def process_event(self, key: int) -> None:
         pass
 
     def do_animation(self) -> None:
-        self._pad.pad.erase()
+        self.pad.erase()
         self.print_status()
         # Resolves curses' "typing the last character of the last line" problem.
-        self._pad.pad.move(0, 0)
+        self.pad.move(0, 0)
 
     def refresh(self) -> None:
-        self._pad.noutrefresh(
+        self.pad.noutrefresh(
             0, 0,
             self.st.scene_pad_coords.br.y + 1, 0,
             self.st.scene_pad_coords.br.y + 1, self.st.scene_pad_coords.br.x,

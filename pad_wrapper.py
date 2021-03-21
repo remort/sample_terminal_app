@@ -30,10 +30,9 @@ class Pad:
     ) -> None:
         attrs = curses.color_pair(cp) | attr
         if sq:
-            x1 = x * 2
-            x2 = x1 + 1
-            self._pad.insstr(y, x1, string, attrs)
-            self._pad.insstr(y, x2, string, attrs)
+            x = x * 2
+            self._pad.insstr(y, x, string, attrs)
+            self._pad.insstr(y, x + 1, string, attrs)
         else:
             self._pad.insstr(y, x, string, attrs)
 
@@ -73,3 +72,9 @@ class Pad:
 
     def bkgd(self, ch: str, cp: int, attr: int = curses.A_NORMAL):
         self._pad.bkgdset(ch, curses.color_pair(cp) | attr)
+
+    def erase(self):
+        self._pad.erase()
+
+    def move(self, new_x, new_y):
+        self._pad.move(new_x, new_y)

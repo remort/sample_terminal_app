@@ -5,7 +5,7 @@ from time import sleep
 
 from controllers.base import BaseController
 from storage import RuntimeStorage
-from tools import Pad
+from pad_wrapper import Pad
 
 
 class AnimationRunner:

@@ -12,7 +12,7 @@ from dto import Size
 from runner import AnimationRunner
 from storage import RuntimeStorage
 from surface_generator import SurfaceGenerator, get_map_size_by_scale
-from tools import Pad
+from pad_wrapper import Pad
 from utils import (
     generate_map_from_surface,
     get_map_scale_by_screen_size,

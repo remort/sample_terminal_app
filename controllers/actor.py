@@ -4,7 +4,7 @@ from colors import A_BOLD, COLOR_ACTOR
 from controllers.base import BaseController
 from dto import Point
 from storage import RuntimeStorage
-from tools import Pad
+from pad_wrapper import Pad
 
 log = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class ActorController(BaseController):
 
     def draw_actor(self) -> None:
         if self.update_actor_location():
-            self._pad.print('+', cp=COLOR_ACTOR, attr=A_BOLD, sq=self.st.square_tiles)
+            self.pad.print('+', cp=COLOR_ACTOR, attr=A_BOLD, sq=self.st.square_tiles)
 
     def get_actor_on_scene_coords(self) -> Point:
         scene_center = self.get_scene_center()
@@ -130,10 +130,10 @@ class ActorController(BaseController):
     def refresh(self) -> None:
         actor_on_scene = self.get_actor_on_scene_coords()
 
-        self._pad.noutrefresh(
+        self.pad.noutrefresh(
             0, 0,
             actor_on_scene.y, actor_on_scene.x,
-            actor_on_scene.y, actor_on_scene.x + self._pad.width,
+            actor_on_scene.y, actor_on_scene.x + self.pad.width,
         )
 
     def do_animation(self) -> None:

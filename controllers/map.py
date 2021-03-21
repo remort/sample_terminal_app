@@ -3,13 +3,14 @@ import logging
 from colors import COLOR_UNVEILED_MAP
 from controllers.base import BaseController
 from dto import Coordinates, Point, Tile
+from pad_wrapper import Pad
 from storage import RuntimeStorage
 
 log = logging.getLogger(__name__)
 
 
 class MapController(BaseController):
-    def __init__(self, pad, storage: RuntimeStorage) -> None:
+    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
         super().__init__(pad, storage)
 
         self.calculate_initial_scene_position()
@@ -40,7 +41,7 @@ class MapController(BaseController):
 
     def unveil_tile(self, tile: Tile) -> None:
         tile.is_veiled = False
-        self._pad.addch(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
+        self.pad.addch(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
 
     def get_previous_tile(self, ap: Point, tile: Tile) -> Tile:
         prev_tile_coords = Point(x=tile.x, y=tile.y)
@@ -258,11 +259,11 @@ class MapController(BaseController):
         if self.st.debug:
             for row in self.st.map:
                 for tile in row:
-                    self._pad.print(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
+                    self.pad.print(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
         else:
             for row in self.st.map:
                 for tile in row:
-                    self._pad.print(
+                    self.pad.print(
                         self.veiled_tile_char,
                         tile.y, tile.x,
                         cp=COLOR_UNVEILED_MAP,
@@ -272,7 +273,7 @@ class MapController(BaseController):
         self.refresh()
 
     def refresh(self) -> None:
-        self._pad.noutrefresh(
+        self.pad.noutrefresh(
             self.st.scene_on_map_coords.tl.y, self.st.scene_on_map_coords.tl.x,
             0, 0,
             self.st.scene_pad_coords.br.y, self.st.scene_pad_coords.br.x,
