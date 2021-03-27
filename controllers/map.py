@@ -1,4 +1,6 @@
 import logging
+import operator
+import typing as t
 
 from colors import COLOR_UNVEILED_MAP
 from controllers.base import BaseController
@@ -19,12 +21,6 @@ class MapController(BaseController):
         self.vision = 8
 
         self.draw_surface()
-
-    def _get_tile(self, line: int, col: int) -> Tile:
-        if self.st.square_tiles:
-            col = col // 2
-
-        return self.st.map[line][col]
 
     def calculate_initial_scene_position(self) -> None:
         map_edge = self.st.map_size
@@ -47,29 +43,35 @@ class MapController(BaseController):
         prev_tile_coords = Point(x=tile.x, y=tile.y)
 
         if tile.x > ap.x:
-            prev_tile_coords.x -= 2 if self.st.square_tiles else 1
+            prev_tile_coords.x -= 1
         if tile.x < ap.x:
-            prev_tile_coords.x += 2 if self.st.square_tiles else 1
+            prev_tile_coords.x += 1
         if tile.y > ap.y:
             prev_tile_coords.y -= 1
         if tile.y < ap.y:
             prev_tile_coords.y += 1
 
-        return self._get_tile(prev_tile_coords.y, prev_tile_coords.x)
+        return self.st.map[prev_tile_coords.y][prev_tile_coords.x]
 
     def is_prev_tile_unveiled(self, ap: Point, tile: Tile) -> bool:
         prev_tile = self.get_previous_tile(ap, tile)
         return not prev_tile.is_veiled
 
-    def is_prev_tile_lower(self, ap: Point, tile: Tile) -> bool:
+    def prev_tile_is_lower(self, ap: Point, tile: Tile) -> bool:
         prev_tile = self.get_previous_tile(ap, tile)
         return prev_tile.height < tile.height
 
-    def are_prev_tiles_lower(self, ap: Point, tile: Tile, dist: int) -> bool:
+    def prev_tiles_lower(self, ap: Point, tile: Tile, dist: int) -> bool:
+        return self.compare_heights(ap, tile, dist, operator.ge)
+
+    def prev_tiles_not_higher(self, ap: Point, tile: Tile, dist: int) -> bool:
+        return self.compare_heights(ap, tile, dist, operator.gt)
+
+    def compare_heights(self, ap: Point, tile: Tile, dist: int, fail_op: t.Callable[[t.Any, t.Any], bool]) -> bool:
         curr_tile_h = tile.height
         for d in range(1, dist):
             tile = self.get_previous_tile(ap, tile)
-            if tile.height >= curr_tile_h:
+            if fail_op(tile.height, curr_tile_h):
                 return False
         return True
 
@@ -78,7 +80,7 @@ class MapController(BaseController):
             return
 
         actor_p = self.st.actor_on_map_pos
-        actor_tile = self.st.curr_height = self.st.map[self.st.actor_on_map_pos.y][self.st.actor_on_map_pos.x]
+        actor_tile = self.st.curr_height = self.st.map[actor_p.y][actor_p.x]
         actor_h = actor_tile.height
         if actor_tile.is_veiled:
             self.unveil_tile(actor_tile)
@@ -95,6 +97,9 @@ class MapController(BaseController):
 
             for row in self.st.map[actor_p.y - min_dist_y:actor_p.y + dist + 1]:
                 for tile in row[actor_p.x - min_dist_x:actor_p.x + dist + 1]:
+                    if not tile.is_veiled:
+                        continue
+
                     x_offset = abs(tile.x - actor_p.x)
                     y_offset = abs(tile.y - actor_p.y)
 
@@ -106,39 +111,39 @@ class MapController(BaseController):
                             self.unveil_tile(tile)
 
                         if dist == 3:
-                            if tile.height <= actor_h:
+                            if tile.height <= actor_h and self.prev_tiles_not_higher(actor_p, tile, dist):
                                 self.unveil_tile(tile)
-                            if tile.height > actor_h and self.are_prev_tiles_lower(actor_p, tile, dist):
+                            if tile.height > actor_h and self.prev_tiles_lower(actor_p, tile, dist):
                                 self.unveil_tile(tile)
 
                         if dist == 4:
-                            if tile.height == actor_h:
-                                if x_offset != y_offset:
+                            if tile.height == actor_h and x_offset != y_offset:
+                                if self.prev_tiles_not_higher(actor_p, tile, dist):
                                     self.unveil_tile(tile)
                             if tile.height < actor_h and self.is_prev_tile_unveiled(actor_p, tile):
                                 self.unveil_tile(tile)
-                            if tile.height > actor_h and self.are_prev_tiles_lower(actor_p, tile, dist):
+                            if tile.height > actor_h and self.prev_tiles_lower(actor_p, tile, dist):
                                 self.unveil_tile(tile)
 
                         if dist == 5:
                             if tile.height < actor_h and self.is_prev_tile_unveiled(actor_p, tile):
                                 self.unveil_tile(tile)
-                            if tile.height > actor_h and self.are_prev_tiles_lower(actor_p, tile, dist):
+                            if tile.height > actor_h and self.prev_tiles_lower(actor_p, tile, dist):
                                 self.unveil_tile(tile)
 
                         if dist == 6:
                             if tile.height < actor_h and self.is_prev_tile_unveiled(actor_p, tile):
                                 if x_offset != y_offset:
                                     self.unveil_tile(tile)
-                            if tile.height > actor_h and self.are_prev_tiles_lower(actor_p, tile, dist):
+                            if tile.height > actor_h and self.prev_tiles_lower(actor_p, tile, dist):
                                 self.unveil_tile(tile)
 
                         if dist == 7:
-                            if tile.height > actor_h and self.are_prev_tiles_lower(actor_p, tile, dist):
+                            if tile.height > actor_h and self.prev_tiles_lower(actor_p, tile, dist):
                                 self.unveil_tile(tile)
 
                         if dist == 8:
-                            if tile.height > actor_h and self.are_prev_tiles_lower(actor_p, tile, dist):
+                            if tile.height > actor_h and self.prev_tiles_lower(actor_p, tile, dist):
                                 self.unveil_tile(tile)
 
         self.need_to_unveil = False
