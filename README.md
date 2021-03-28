@@ -1,4 +1,4 @@
-#### 2d surface generation app to be used in terminal.
+#### 2d surface generation app to be run in terminal.
 
 Generates map on every run, draws it and gives the interface to navigate on it.
 
@@ -22,3 +22,8 @@ Surface generator uses Diamond-Square algorithm:
 Eyesight logic for map discovering calculations,
 uses "linear interpolation" to get intermediary points between player and distant point on the map.
 [Linear interpolation](https://x-engineer.org/undergraduate-engineering/advanced-mathematics/numerical-methods/linear-interpolation-and-extrapolation-with-calculator/)
+
+#### TODO:
+
+Try to re-implement this algorithm also as an alternative to Diamond-Square:
+[pymap](https://github.com/octaviotron/pymap)
