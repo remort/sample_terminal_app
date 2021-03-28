@@ -30,11 +30,6 @@ class SurfaceGenerator:
         self.rnd_denominator_base = 2 ** (self.rnd_power + 0.3)
         self.rnd_denominator_step = self.rnd_denominator_base / (self.scale / 2)
 
-    @staticmethod
-    def round(x: float):
-        """2.5 -> 3, 2.4 -> 2, unlike modern round()."""
-        return int(x + 0.5)
-
     def get_roughness_factor(self) -> t.Union[float, int]:
         denominator = self.rnd_denominator_base + self.rnd_denominator_step * (self.scale - self.steps_to_finish)
         value = random.getrandbits(self.rnd_power) / denominator
@@ -120,7 +115,7 @@ class SurfaceGenerator:
             self.surface[point_4[0]][point_4[1]] if point_4 is not None else 0,
         )) / (4 if point_4 else 3)
 
-        return self.round(avg + self.get_roughness_factor())
+        return round(avg + self.get_roughness_factor())
 
     @staticmethod
     def get_edge_size_by_coords(coords: SurfaceCoords) -> int:

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 import argparse
 import curses
 import logging
@@ -9,10 +10,10 @@ from controllers.actor import ActorController
 from controllers.map import MapController
 from controllers.status_bar import StatusBarController
 from dto import Size
+from pad_wrapper import Pad
 from runner import AnimationRunner
 from storage import RuntimeStorage
 from surface_generator import SurfaceGenerator, get_map_size_by_scale
-from pad_wrapper import Pad
 from utils import (
     generate_map_from_surface,
     get_map_scale_by_screen_size,
@@ -31,9 +32,8 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
-    log.debug('Program configuring.')
-    storage = RuntimeStorage()
+def get_args() -> argparse.Namespace:
+    log.debug('Parsing command arguments.')
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -44,8 +44,13 @@ def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
         '--square-tiles', action='store_true',
         help='Map tile is being drawn as two terminal symbols. Horizontal movements jump over two tiles a time.',
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+def configure(screen_height: int, screen_width: int, args: argparse.Namespace) -> RuntimeStorage:
+    log.debug('Program configuring.')
+    storage = RuntimeStorage()
+
     if args.debug:
         storage.debug = True
 
@@ -73,12 +78,13 @@ def configure(screen_height: int, screen_width: int) -> RuntimeStorage:
 
 def main(stdscr: curses.window) -> None:
     log.debug('Program starting.')
+
+    args = get_args()
+    screen_height, screen_width = stdscr.getmaxyx()
+    storage = configure(screen_height, screen_width, args)
+
     curses.curs_set(0)
     init_color_pairs()
-
-    screen_height, screen_width = stdscr.getmaxyx()
-
-    storage = configure(screen_height, screen_width)
 
     kb_pad = Pad(1, 1)
     map_pad = Pad(storage.map_pad_h, storage.map_pad_w)
@@ -95,4 +101,5 @@ def main(stdscr: curses.window) -> None:
     runner.run()
 
 
+args = get_args()
 wrapper(main)

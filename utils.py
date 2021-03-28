@@ -55,6 +55,8 @@ def generate_map_from_surface(storage) -> MapType:
 
 def path_between_two_dots(p1: Point, p2: Point) -> t.Generator[Point, None, Point]:
     """
+    # Linear interpolation algorithm implementation. Finds path between two points in XY matrix.
+
     # "long", X-axis oriented paths tests:
     # Y axis increasing
     >>> [p for p in path_between_two_dots(Point(x=1,y=2), Point(x=11, y=7))]
