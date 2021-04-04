@@ -3,17 +3,18 @@ import operator
 import typing as t
 
 from colors import COLOR_UNVEILED_MAP
+from configuration.main import Configuration
+from constants import KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_UP, MOVE_KEYS
 from controllers.base import BaseController
 from dto import Coordinates, Point, Tile
 from pad_wrapper import Pad
-from storage import RuntimeStorage
 from utils import path_between_two_dots
 
 log = logging.getLogger(__name__)
 
 
 class MapController(BaseController):
-    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
+    def __init__(self, pad: Pad, storage: Configuration) -> None:
         super().__init__(pad, storage)
 
         self.calculate_initial_scene_position()
@@ -21,9 +22,13 @@ class MapController(BaseController):
         self.need_to_unveil = True
         self.vision = 8
 
-        self.draw_surface()
+        self.draw_map()
 
     def calculate_initial_scene_position(self) -> None:
+        # Return, if loaded from saved file.
+        if self.st.scene_on_map_coords:
+            return
+
         map_edge = self.st.map_size
         horizontal_map_size = self.st.map_size * 2 if self.st.square_tiles else self.st.map_size
 
@@ -140,14 +145,14 @@ class MapController(BaseController):
         self.need_to_unveil = False
 
     def process_event(self, key: int) -> None:
-        if key in self.st.move_keys:
-            if key == self.st.key_up:
+        if key in MOVE_KEYS:
+            if key == KEY_UP:
                 self.scroll_v(1)
-            if key == self.st.key_down:
+            if key == KEY_DOWN:
                 self.scroll_v(-1)
-            if key == self.st.key_right:
+            if key == KEY_RIGHT:
                 self.scroll_h(2 if self.st.square_tiles else 1)
-            if key == self.st.key_left:
+            if key == KEY_LEFT:
                 self.scroll_h(-2 if self.st.square_tiles else -1)
 
             self.need_to_unveil = True
@@ -251,7 +256,7 @@ class MapController(BaseController):
         else:
             self.st.scene_is_most_left = False
 
-    def draw_surface(self) -> None:
+    def draw_map(self) -> None:
         if self.st.debug:
             for row in self.st.map:
                 for tile in row:
@@ -260,9 +265,9 @@ class MapController(BaseController):
             for row in self.st.map:
                 for tile in row:
                     self.pad.print(
-                        self.veiled_tile_char,
+                        self.veiled_tile_char if tile.is_veiled else tile.ch,
                         tile.y, tile.x,
-                        cp=COLOR_UNVEILED_MAP,
+                        cp=COLOR_UNVEILED_MAP if tile.is_veiled else tile.color,
                         sq=self.st.square_tiles,
                     )
 

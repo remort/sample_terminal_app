@@ -3,23 +3,23 @@
 import argparse
 import curses
 import logging
+import sys
+import traceback
 from curses import wrapper
 
 from colors import init_color_pairs
+from configuration.file_storage import ConfigurationFileStorageHandler
+from configuration.main import Configuration
+from constants import BAR_HEIGHT
 from controllers.actor import ActorController
 from controllers.map import MapController
 from controllers.status_bar import StatusBarController
 from dto import Size
+from errors import BaseAppError
 from pad_wrapper import Pad
-from runner import AnimationRunner
-from storage import RuntimeStorage
+from runner import ApplicationRunner
 from surface_generator import SurfaceGenerator, get_map_size_by_scale
-from utils import (
-    generate_map_from_surface,
-    get_map_scale_by_screen_size,
-    make_coordinates_by_size,
-    make_map_coordinates_by_pad_dimensions,
-)
+from utils import generate_map_from_surface, get_map_scale_by_screen_size, make_coordinates_by_size
 
 logging.basicConfig(
     filename='application.log',
@@ -44,62 +44,76 @@ def get_args() -> argparse.Namespace:
         '--square-tiles', action='store_true',
         help='Map tile is being drawn as two terminal symbols. Horizontal movements jump over two tiles a time.',
     )
+    parser.add_argument(
+        '--load-config', action='store',
+        help='Point a name of previously saved config file here to continue on the saved state.',
+    )
     return parser.parse_args()
 
 
-def configure(screen_height: int, screen_width: int, args: argparse.Namespace) -> RuntimeStorage:
+def configure(screen_height: int, screen_width: int, args: argparse.Namespace) -> Configuration:
     log.debug('Program configuring.')
-    storage = RuntimeStorage()
+    config = Configuration(ConfigurationFileStorageHandler())
 
     if args.debug:
-        storage.debug = True
+        config.debug = True
 
     if args.square_tiles:
-        storage.square_tiles = True
+        config.square_tiles = True
 
-    storage.map_scale = get_map_scale_by_screen_size(screen_height, screen_width)
-    storage.map_size = get_map_size_by_scale(storage.map_scale)
+    config.map_scale = get_map_scale_by_screen_size(screen_height, screen_width)
+    config.map_size = get_map_size_by_scale(config.map_scale)
 
-    storage.map_pad_h = storage.map_size
-    storage.map_pad_w = (storage.map_size * 2) if storage.square_tiles else storage.map_size
+    config.map_pad_h = config.map_size
+    config.map_pad_w = (config.map_size * 2) if config.square_tiles else config.map_size
 
-    storage.map_pad_coords = make_map_coordinates_by_pad_dimensions(storage.map_pad_h, storage.map_pad_w)
+    config.scene_size = Size(w=screen_width, h=screen_height - BAR_HEIGHT)
+    config.scene_pad_coords = make_coordinates_by_size(Size(w=screen_width, h=screen_height - BAR_HEIGHT))
 
-    storage.surface = SurfaceGenerator(storage.map_scale).gen()
-    storage.scene_size = Size(w=screen_width, h=screen_height - storage.bar_height)
-    storage.scene_pad_coords = make_coordinates_by_size(Size(w=screen_width, h=screen_height - storage.bar_height))
+    config.status_bar_width = screen_width
 
-    storage.status_bar_width = screen_width
+    if args.load_config:
+        config.load(args.load_config)
+    else:
+        config.surface = SurfaceGenerator(config.map_scale).gen()
+        config.map = generate_map_from_surface(config.surface)
 
-    storage.map = generate_map_from_surface(storage)
-
-    return storage
+    return config
 
 
 def main(stdscr: curses.window) -> None:
     log.debug('Program starting.')
 
-    args = get_args()
+    command_args = get_args()
     screen_height, screen_width = stdscr.getmaxyx()
-    storage = configure(screen_height, screen_width, args)
+    config = configure(screen_height, screen_width, command_args)
 
     curses.curs_set(0)
     init_color_pairs()
 
     kb_pad = Pad(1, 1)
-    map_pad = Pad(storage.map_pad_h, storage.map_pad_w)
-    actor_pad = Pad(1, 1 + (1 if storage.square_tiles else 0))
-    status_bar_pad = Pad(1, storage.status_bar_width)
+    map_pad = Pad(config.map_pad_h, config.map_pad_w)
+    actor_pad = Pad(1, 1 + (1 if config.square_tiles else 0))
+    status_bar_pad = Pad(1, config.status_bar_width)
 
-    map = MapController(map_pad, storage)
-    actor = ActorController(actor_pad, storage)
-    status_bar = StatusBarController(status_bar_pad, storage)
+    map = MapController(map_pad, config)
+    actor = ActorController(actor_pad, config)
+    status_bar = StatusBarController(status_bar_pad, config)
 
     pad_controllers = [map, actor, status_bar]
 
-    runner = AnimationRunner(kb_pad, pad_controllers, storage)
+    runner = ApplicationRunner(kb_pad, pad_controllers, config)
     runner.run()
 
 
 args = get_args()
-wrapper(main)
+try:
+    wrapper(main)
+except BaseAppError as error:
+    log.exception('Fatal error: %s', error)
+    print(f'Fatal error: "{error}": See logs for details.')
+    exit(1)
+except Exception as error:
+    log.exception('Unknown fatal error: %s', error)
+    traceback.print_exception(*sys.exc_info())
+    exit(127)

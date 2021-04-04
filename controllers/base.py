@@ -1,11 +1,11 @@
+from configuration.main import Configuration
 from pad_wrapper import Pad
-from storage import RuntimeStorage
 
 
 class BaseController:
-    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
+    def __init__(self, pad: Pad, storage: Configuration) -> None:
         self.pad: Pad = pad
-        self.st: RuntimeStorage = storage
+        self.st: Configuration = storage
 
     def process_event(self, key: int) -> None:
         pass

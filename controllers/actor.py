@@ -1,16 +1,17 @@
 import logging
 
 from colors import A_BOLD, COLOR_ACTOR
+from configuration.main import Configuration
+from constants import KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_UP, MOVE_KEYS
 from controllers.base import BaseController
 from dto import Point
-from storage import RuntimeStorage
 from pad_wrapper import Pad
 
 log = logging.getLogger(__name__)
 
 
 class ActorController(BaseController):
-    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
+    def __init__(self, pad: Pad, storage: Configuration) -> None:
         super().__init__(pad, storage)
         self.draw_actor()
 
@@ -31,14 +32,14 @@ class ActorController(BaseController):
         return sc
 
     def process_event(self, key: int) -> None:
-        if key in self.st.move_keys:
-            if key == self.st.key_up:
+        if key in MOVE_KEYS:
+            if key == KEY_UP:
                 self.move_v(1)
-            if key == self.st.key_down:
+            if key == KEY_DOWN:
                 self.move_v(-1)
-            if key == self.st.key_right:
+            if key == KEY_RIGHT:
                 self.move_h(2 if self.st.square_tiles else 1)
-            if key == self.st.key_left:
+            if key == KEY_LEFT:
                 self.move_h(-2 if self.st.square_tiles else -1)
 
             self.draw_actor()

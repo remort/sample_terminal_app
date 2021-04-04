@@ -1,11 +1,15 @@
+import logging
+
 from colors import A_BOLD, COLOR_STATUS_BAR_MESSAGES, COLOR_STATUS_BAR_STATS
+from configuration.main import Configuration
 from controllers.base import BaseController
 from pad_wrapper import Pad
-from storage import RuntimeStorage
+
+log = logging.getLogger(__name__)
 
 
 class StatusBarController(BaseController):
-    def __init__(self, pad: Pad, storage: RuntimeStorage) -> None:
+    def __init__(self, pad: Pad, storage: Configuration) -> None:
         super().__init__(pad, storage)
 
         self.status_bar_width: int = self.st.status_bar_width
@@ -31,7 +35,7 @@ class StatusBarController(BaseController):
 
         last_message = ''
         messages = len(self.st.messages)
-        if messages > 1:
+        if messages > 0:
             last_message = self.st.messages.pop()
             messages -= 1
 

@@ -4,13 +4,11 @@ import random
 import typing as t
 from pprint import pprint
 
+from utils import get_map_size_by_scale
+
 SurfacePoint = t.Tuple[int, int]
 SurfaceCoords = t.Tuple[SurfacePoint, SurfacePoint, SurfacePoint, SurfacePoint]
 Surface = t.List[t.List[int]]
-
-
-def get_map_size_by_scale(scale: int) -> int:
-    return 2 ** scale + 1
 
 
 class SurfaceGenerator:
@@ -176,7 +174,8 @@ class SurfaceGenerator:
                 coords[0], coords[3], center_point, leftmost_mid_point
             )
 
-    def get_middle(self, int_one: int, int_two: int) -> int:
+    @staticmethod
+    def get_middle(int_one: int, int_two: int) -> int:
         return (int_one + int_two) // 2
 
     def get_subsquares_coords(
