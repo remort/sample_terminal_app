@@ -7,6 +7,8 @@ from configuration.main import Configuration
 from dto import Coordinates, Point, Size, Tile
 from errors import BaseAppError
 
+import random
+
 log = logging.getLogger(__name__)
 
 
@@ -63,7 +65,7 @@ class ConfigurationFileStorageHandler:
                 indent=None,
             )
 
-            message = 'Config saved.'
+            message = 'Config saved.' + str(random.randint(1, 10))
             log.info(message)
             config.messages.append(message)
 

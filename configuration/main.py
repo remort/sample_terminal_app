@@ -66,6 +66,3 @@ class Configuration:
 
     def save(self):
         self.storage_handler.save(self)
-        message = 'Config saved.'
-        log.info(message)
-        self.messages.append(message)

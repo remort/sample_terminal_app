@@ -5,7 +5,7 @@ from collections import deque
 from time import sleep
 
 from configuration.main import Configuration
-from constants import HEIGHTS_TO_WAIT_TIME_MAP, KEY_SAVE, MOVE_KEYS
+from constants import HEIGHTS_TO_WAIT_TIME_MAP, KEY_NEXT_MSG, KEY_SAVE, MOVE_KEYS
 from controllers.base import BaseController
 from pad_wrapper import Pad
 
@@ -48,6 +48,9 @@ class ApplicationRunner:
                 curses.flushinp()
             elif key == KEY_SAVE:
                 self._config.save()
+            elif key == KEY_NEXT_MSG:
+                if len(self._config.messages) > 0:
+                    self._config.messages.pop()
 
             if self._time_to_wait <= 0:
                 try:

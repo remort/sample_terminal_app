@@ -21,6 +21,7 @@ KEY_DOWN = KEY_DOWN
 KEY_LEFT = KEY_LEFT
 KEY_RIGHT = KEY_RIGHT
 KEY_SAVE = 115  # 's'
+KEY_NEXT_MSG = 109  # 'm'
 
 HEIGHTS_TO_COLORS_MAP: t.Dict[int, t.Tuple[str, int]] = {
     0: ('0', COLOR_MAP_H1),

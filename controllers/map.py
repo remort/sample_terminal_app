@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 
 
 class MapController(BaseController):
-    def __init__(self, pad: Pad, storage: Configuration) -> None:
-        super().__init__(pad, storage)
+    def __init__(self, pad: Pad, configuration: Configuration) -> None:
+        super().__init__(pad, configuration)
 
         self.calculate_initial_scene_position()
         self.veiled_tile_char: str = '.'
@@ -26,32 +26,32 @@ class MapController(BaseController):
 
     def calculate_initial_scene_position(self) -> None:
         # Return, if loaded from saved file.
-        if self.st.scene_on_map_coords:
+        if self.cf.scene_on_map_coords:
             return
 
-        map_edge = self.st.map_size
-        horizontal_map_size = self.st.map_size * 2 if self.st.square_tiles else self.st.map_size
+        map_edge = self.cf.map_size
+        horizontal_map_size = self.cf.map_size * 2 if self.cf.square_tiles else self.cf.map_size
 
-        lx = (horizontal_map_size - self.st.scene_size.w) // 2 + (horizontal_map_size - self.st.scene_size.w) % 2
-        rx = lx + self.st.scene_size.w
-        ty = (map_edge - self.st.scene_size.h) // 2 + (map_edge - self.st.scene_size.h) % 2
-        by = ty + self.st.scene_size.h
+        lx = (horizontal_map_size - self.cf.scene_size.w) // 2 + (horizontal_map_size - self.cf.scene_size.w) % 2
+        rx = lx + self.cf.scene_size.w
+        ty = (map_edge - self.cf.scene_size.h) // 2 + (map_edge - self.cf.scene_size.h) % 2
+        by = ty + self.cf.scene_size.h
 
-        self.st.scene_on_map_coords = Coordinates(
+        self.cf.scene_on_map_coords = Coordinates(
             tl=Point(x=lx, y=ty), tr=Point(x=rx, y=ty), br=Point(x=rx, y=by), bl=Point(x=lx, y=by)
         )
 
     def unveil_tile(self, tile: Tile) -> None:
         tile.is_veiled = False
-        self.pad.addch(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
+        self.pad.addch(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.cf.square_tiles)
 
     def is_prev_tile_unveiled(self, ap: Point, tile: Tile) -> bool:
         prev_tile_loc = next(path_between_two_dots(tile.loc, ap))
-        return not self.st.map[prev_tile_loc.y][prev_tile_loc.x].is_veiled
+        return not self.cf.map[prev_tile_loc.y][prev_tile_loc.x].is_veiled
 
     def prev_tile_is_lower(self, ap: Point, tile: Tile) -> bool:
         prev_tile_loc = next(path_between_two_dots(tile.loc, ap))
-        return self.st.map[prev_tile_loc.y][prev_tile_loc.x].height < tile.height
+        return self.cf.map[prev_tile_loc.y][prev_tile_loc.x].height < tile.height
 
     def prev_tiles_lower(self, ap: Point, tile: Tile) -> bool:
         return self.compare_heights(ap, tile, operator.lt)
@@ -67,16 +67,16 @@ class MapController(BaseController):
             except StopIteration:
                 return True
 
-            tile = self.st.map[prev_tile_loc.y][prev_tile_loc.x]
+            tile = self.cf.map[prev_tile_loc.y][prev_tile_loc.x]
             if not op(tile.height, curr_tile_h):
                 return False
 
     def unveil_map(self) -> None:
-        if self.st.debug or not self.need_to_unveil:
+        if self.cf.debug or not self.need_to_unveil:
             return
 
-        actor_p = self.st.actor_on_map_pos
-        actor_tile = self.st.curr_height = self.st.map[actor_p.y][actor_p.x]
+        actor_p = self.cf.actor_on_map_pos
+        actor_tile = self.cf.curr_height = self.cf.map[actor_p.y][actor_p.x]
         actor_h = actor_tile.height
         if actor_tile.is_veiled:
             self.unveil_tile(actor_tile)
@@ -91,7 +91,7 @@ class MapController(BaseController):
             min_dist_x = dist if dist <= max_vision_x else max_vision_x
             min_dist_y = dist if dist <= max_vision_y else max_vision_y
 
-            for row in self.st.map[actor_p.y - min_dist_y:actor_p.y + dist + 1]:
+            for row in self.cf.map[actor_p.y - min_dist_y:actor_p.y + dist + 1]:
                 for tile in row[actor_p.x - min_dist_x:actor_p.x + dist + 1]:
                     if not tile.is_veiled:
                         continue
@@ -151,57 +151,57 @@ class MapController(BaseController):
             if key == KEY_DOWN:
                 self.scroll_v(-1)
             if key == KEY_RIGHT:
-                self.scroll_h(2 if self.st.square_tiles else 1)
+                self.scroll_h(2 if self.cf.square_tiles else 1)
             if key == KEY_LEFT:
-                self.scroll_h(-2 if self.st.square_tiles else -1)
+                self.scroll_h(-2 if self.cf.square_tiles else -1)
 
             self.need_to_unveil = True
 
     def scroll_v(self, step: int) -> None:
-        self.st.scene_moved = False
-        if self.st.scene_is_most_top:
+        self.cf.scene_moved = False
+        if self.cf.scene_is_most_top:
             if step > 0:
                 return
 
-        if self.st.scene_is_most_bottom:
+        if self.cf.scene_is_most_bottom:
             if step < 0:
                 return
 
-        if self.st.actor_scene_center_offset.h != 0:
+        if self.cf.actor_scene_center_offset.h != 0:
             return
 
-        self.st.scene_on_map_coords.tl.y -= step
-        self.st.scene_on_map_coords.tr.y -= step
-        self.st.scene_on_map_coords.br.y -= step
-        self.st.scene_on_map_coords.bl.y -= step
+        self.cf.scene_on_map_coords.tl.y -= step
+        self.cf.scene_on_map_coords.tr.y -= step
+        self.cf.scene_on_map_coords.br.y -= step
+        self.cf.scene_on_map_coords.bl.y -= step
 
-        if self.st.scene_on_map_coords.tl.y <= 0:
-            self.st.scene_is_most_top = True
+        if self.cf.scene_on_map_coords.tl.y <= 0:
+            self.cf.scene_is_most_top = True
         else:
-            self.st.scene_is_most_top = False
+            self.cf.scene_is_most_top = False
 
-        if self.st.scene_on_map_coords.br.y >= self.st.map_size:
-            self.st.scene_is_most_bottom = True
+        if self.cf.scene_on_map_coords.br.y >= self.cf.map_size:
+            self.cf.scene_is_most_bottom = True
         else:
-            self.st.scene_is_most_bottom = False
+            self.cf.scene_is_most_bottom = False
 
-        self.st.scene_moved = True
+        self.cf.scene_moved = True
 
     def scroll_h(self, step: int) -> None:
-        self.st.scene_moved = False
-        self.st.short_scroll = False
-        horizontal_map_size = self.st.map_size * 2 if self.st.square_tiles else self.st.map_size
+        self.cf.scene_moved = False
+        self.cf.short_scroll = False
+        horizontal_map_size = self.cf.map_size * 2 if self.cf.square_tiles else self.cf.map_size
 
-        if self.st.scene_is_most_right:
+        if self.cf.scene_is_most_right:
             if step > 0:
                 return
 
-        if self.st.scene_is_most_left:
+        if self.cf.scene_is_most_left:
             if step < 0:
                 return
 
-        if self.st.square_tiles:
-            self.st.short_scroll = False
+        if self.cf.square_tiles:
+            self.cf.short_scroll = False
 
             # Scene is about to leave right/left border.
             # If actor scene X offset is -1 or 1 and increasing/decreasing: Short scene scroll should be made.
@@ -210,74 +210,74 @@ class MapController(BaseController):
 
             # FOR TESTS: appears on for example scene widths: 57, 61
             # First scroll of scene from left border to map center caught, make it short.
-            if self.st.actor_scene_center_offset.w == -1:
+            if self.cf.actor_scene_center_offset.w == -1:
                 if step > 0:
                     step -= 1
-                self.st.short_scroll = True
+                self.cf.short_scroll = True
 
             # FOR TESTS: appears on for example scene widths: 59, 63
             # First scroll of scene from right border to map center caught, make it short.
-            elif self.st.actor_scene_center_offset.w == 1:
+            elif self.cf.actor_scene_center_offset.w == 1:
                 if step < 0:
                     step += 1
-                self.st.short_scroll = True
+                self.cf.short_scroll = True
 
-            elif self.st.actor_scene_center_offset.w != 0:
+            elif self.cf.actor_scene_center_offset.w != 0:
                 return
 
             # Scene is about to overstep right/left border: make a short step.
             # Scene steps over right border - decrease step to fit to the border.
-            if self.st.scene_on_map_coords.tr.x + step > horizontal_map_size and step > 0:
+            if self.cf.scene_on_map_coords.tr.x + step > horizontal_map_size and step > 0:
                 step -= 1
-                self.st.short_scroll = True
+                self.cf.short_scroll = True
 
             # Scene steps over left border - increase step to fit to the border.
-            if self.st.scene_on_map_coords.tl.x + step < 0:
+            if self.cf.scene_on_map_coords.tl.x + step < 0:
                 step += 1
-                self.st.short_scroll = True
+                self.cf.short_scroll = True
         else:
-            if self.st.actor_scene_center_offset.w != 0:
+            if self.cf.actor_scene_center_offset.w != 0:
                 return
 
-        self.st.scene_on_map_coords.tl.x += step
-        self.st.scene_on_map_coords.tr.x += step
-        self.st.scene_on_map_coords.br.x += step
-        self.st.scene_on_map_coords.bl.x += step
+        self.cf.scene_on_map_coords.tl.x += step
+        self.cf.scene_on_map_coords.tr.x += step
+        self.cf.scene_on_map_coords.br.x += step
+        self.cf.scene_on_map_coords.bl.x += step
 
-        if self.st.scene_on_map_coords.tr.x >= horizontal_map_size:
-            self.st.scene_is_most_right = True
-            self.st.scene_moved = True
+        if self.cf.scene_on_map_coords.tr.x >= horizontal_map_size:
+            self.cf.scene_is_most_right = True
+            self.cf.scene_moved = True
         else:
-            self.st.scene_is_most_right = False
+            self.cf.scene_is_most_right = False
 
-        if self.st.scene_on_map_coords.tl.x <= 0:
-            self.st.scene_is_most_left = True
-            self.st.scene_moved = True
+        if self.cf.scene_on_map_coords.tl.x <= 0:
+            self.cf.scene_is_most_left = True
+            self.cf.scene_moved = True
         else:
-            self.st.scene_is_most_left = False
+            self.cf.scene_is_most_left = False
 
     def draw_map(self) -> None:
-        if self.st.debug:
-            for row in self.st.map:
+        if self.cf.debug:
+            for row in self.cf.map:
                 for tile in row:
-                    self.pad.print(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.st.square_tiles)
+                    self.pad.print(tile.ch, tile.y, tile.x, cp=tile.color, sq=self.cf.square_tiles)
         else:
-            for row in self.st.map:
+            for row in self.cf.map:
                 for tile in row:
                     self.pad.print(
                         self.veiled_tile_char if tile.is_veiled else tile.ch,
                         tile.y, tile.x,
                         cp=COLOR_UNVEILED_MAP if tile.is_veiled else tile.color,
-                        sq=self.st.square_tiles,
+                        sq=self.cf.square_tiles,
                     )
 
         self.refresh()
 
     def refresh(self) -> None:
         self.pad.noutrefresh(
-            self.st.scene_on_map_coords.tl.y, self.st.scene_on_map_coords.tl.x,
+            self.cf.scene_on_map_coords.tl.y, self.cf.scene_on_map_coords.tl.x,
             0, 0,
-            self.st.scene_pad_coords.br.y, self.st.scene_pad_coords.br.x,
+            self.cf.scene_pad_coords.br.y, self.cf.scene_pad_coords.br.x,
         )
 
     def do_animation(self) -> None:
